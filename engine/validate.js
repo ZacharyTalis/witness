@@ -273,11 +273,11 @@ function init(puzzle) { // initialize globals
     units.push(performance.now());
     names.push('transcribing path to global');
     let _OPPOSITE = [1, 0, 3, 2];
-    if (puzzle.symmetry != null) {
+    if (puzzle.isSymmetry()) {
         for (let c of global.path) {
             let o = puzzle.getSymmetricalPos(...xy(c[0]));
-            if (c[1] === undefined) global.pathSym.push([ret(o.x, o.y)]);
-            else global.pathSym.push([ret(o.x, o.y), _OPPOSITE[c[1]]]);
+            if (c[1] === undefined) global.pathSym.push([ret(...o)]);
+            else global.pathSym.push([ret(...o), _OPPOSITE[c[1]]]);
         }
         global.pathAll = [];
         for (let i = 0; i < global.path.length; i++) {

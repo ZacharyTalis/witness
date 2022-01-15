@@ -304,6 +304,14 @@ window.drawSymbolWithSvg = function(svg, params) {
       if (params.dir === 'left' || params.dir === 'top'   ) sign = -1;
       rect.setAttribute(      axis, parseInt(rect.getAttribute(      axis)) + (sign * 12))
       circ.setAttribute('c' + axis, parseInt(circ.getAttribute('c' + axis)) + (sign * 24))
+      if (params.endType > 0 && document.getElementById('metaButtons') != null) {
+        let text = createElement('text')
+        svg.appendChild(text);
+        text.innerHTML = params.endType === 1 ? 'B' : 'C'
+        text.setAttribute('fill', 'var(--text)')
+        text.setAttribute('x', midx - 6); text.setAttribute('y', midy);
+        text.setAttribute(axis, parseInt(text.getAttribute(axis)) + (sign * 24))
+      }
       break;
     case 'drag': //------------------------------------DRAWN LINE
       if (!params.rot) params.rot = 0

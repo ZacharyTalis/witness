@@ -22,12 +22,13 @@ Now that looksyv2 is out mroe things must be done
 - [ ] challenge packs
 - [x] reduce code size further, group similar ones
 - [ ] optimize verification algorithm
+- [ ] custom RGBA selector 
 
 ### Tutorials for...
 - [x] curve
 - [ ] xs
 - [x] arrow
-- [ ] dart
+- [x] dart
 - [ ] antitriangle
 - [x] tent
 - [ ] the holes
@@ -41,18 +42,16 @@ Now that looksyv2 is out mroe things must be done
 - [ ] celledhex
 
 ### New Symbols...
-- [ ] scratches
 - [x] dice
 - [x] xv mino
 - [x] crystals
 
 ### Might do
 - [ ] vanilla shapes tutorial? (including triangle)
-- [ ] OOB poly
-- [ ] More symmetry types (eventually artless' divider? Vertical pillar? torus?)
-- [ ] WTW symbols?
+- [x] More symmetry types (eventually artless' divider? Vertical pillar? torus?)
+- [x] WTW symbols?
 - [x] Scissors?
-- [ ] Artificial Walls?
-- [ ] Hidden Puzzles?
-- [ ] A way to make localstorage less cluttered
+- [x] Artificial Walls?
+- [x] Hidden Puzzles?
+- [x] A way to make localstorage less cluttered
 - [ ] randomly generate puzzle

@@ -30,17 +30,17 @@ function countNodes(x, y, depth) {
   if (window.CUSTOM_LINE > cell.gap && cell.gap > window.GAP_NONE) return
   if (cell.line !== window.LINE_NONE) return
 
-  if (puzzle.symmetry == null) {
+  if (!puzzle.isSymmetry()) {
     puzzle.updateCell2(x, y, 'line', window.LINE_BLACK)
   } else {
     var sym = puzzle.getSymmetricalPos(x, y)
-    if (puzzle.matchesSymmetricalPos(x, y, sym.x, sym.y)) return // Would collide with our reflection
+    if (puzzle.matchesSymmetricalPos(x, y, ...sym)) return // Would collide with our reflection
 
-    var symCell = puzzle.getCell(sym.x, sym.y)
+    var symCell = puzzle.getCell(...sym)
     if (window.CUSTOM_LINE > symCell.gap && symCell.gap > window.GAP_NONE) return
 
     puzzle.updateCell2(x, y, 'line', window.LINE_BLUE)
-    puzzle.updateCell2(sym.x, sym.y, 'line', window.LINE_YELLOW)
+    puzzle.updateCell2(...sym, 'line', window.LINE_YELLOW)
   }
 
   if (depth < NODE_DEPTH) {
@@ -83,16 +83,17 @@ window.solve = function(p, partialCallback, finalCallback) {
     }
   }
 
-  // Puzzles which are small enough should be solved synchronously, since the cost of asynchronizing
-  // is greater than the cost of the puzzle.
-  SOLVE_SYNC = false
-  if (puzzle.symmetry != null) { // 5x5 is the max for symmetry puzzles
-    if (puzzle.width * puzzle.height <= 121) SOLVE_SYNC = true
-  } else if (puzzle.pillar === true) { // 4x5 is the max for non-symmetry, pillar puzzles
-    if (puzzle.width * puzzle.height <= 108) SOLVE_SYNC = true
-  } else { // 5x5 is the max for non-symmetry, non-pillar puzzles
-    if (puzzle.width * puzzle.height <= 121) SOLVE_SYNC = true
-  }
+  //// Puzzles which are small enough should be solved synchronously, since the cost of asynchronizing
+  //// is greater than the cost of the puzzle.
+  //* lol cancel solving doesn't work already why not just sync everything
+  SOLVE_SYNC = true
+  // if (puzzle.isSymmetry()) { // 5x5 is the max for symmetry puzzles
+  //   if (puzzle.width * puzzle.height <= 121) SOLVE_SYNC = true
+  // } else if (puzzle.isPillar()) { // 4x5 is the max for non-symmetry, pillar puzzles
+  //   if (puzzle.width * puzzle.height <= 108) SOLVE_SYNC = true
+  // } else { // 5x5 is the max for non-symmetry, non-pillar puzzles
+  //   if (puzzle.width * puzzle.height <= 121) SOLVE_SYNC = true
+  // }
   console.log('Puzzle is a', puzzle.width, 'by', puzzle.height, 'solving ' + (SOLVE_SYNC ? 'sync' : 'async'))
 
   // We pre-traverse the grid (only considering obvious failure states like going out of bounds),
@@ -135,7 +136,7 @@ window.solve = function(p, partialCallback, finalCallback) {
 
   taskLoop(partialCallback, function() {
     var end = (new Date()).getTime()
-    console.error('Solved', puzzle, 'in', (end-start)/1000, 'seconds, ', count, 'loops done')
+    console.warn('Solved', puzzle, 'in', (end-start)/1000, 'seconds, ', count, 'loops done')
     if (finalCallback) finalCallback(solutionPaths)
   })
   return solutionPaths
@@ -183,9 +184,9 @@ function taskLoop(partialCallback, finalCallback) {
 function tailRecurse(x, y) {
   // Tail recursion: Back out of this cell
   puzzle.updateCell2(x, y, 'line', window.LINE_NONE)
-  if (puzzle.symmetry != null) {
+  if (puzzle.isSymmetry()) {
     var sym = puzzle.getSymmetricalPos(x, y)
-    puzzle.updateCell2(sym.x, sym.y, 'line', window.LINE_NONE)
+    puzzle.updateCell2(...sym, 'line', window.LINE_NONE)
   }
 }
 
@@ -210,17 +211,17 @@ function solveLoop(x, y, numEndpoints, earlyExitData, depth) {
   if (window.CUSTOM_LINE > cell.gap && cell.gap > window.GAP_NONE) return
   if (cell.line !== window.LINE_NONE) return
 
-  if (puzzle.symmetry == null) {
+  if (!puzzle.isSymmetry()) {
     puzzle.updateCell2(x, y, 'line', window.LINE_BLACK)
   } else {
     var sym = puzzle.getSymmetricalPos(x, y)
-    if (puzzle.matchesSymmetricalPos(x, y, sym.x, sym.y)) return // Would collide with our reflection
+    if (puzzle.matchesSymmetricalPos(x, y, ...sym)) return // Would collide with our reflection
 
-    var symCell = puzzle.getCell(sym.x, sym.y)
+    var symCell = puzzle.getCell(...sym)
     if (window.CUSTOM_LINE > symCell.gap && symCell.gap > window.GAP_NONE) return
 
     puzzle.updateCell2(x, y, 'line', window.LINE_BLUE)
-    puzzle.updateCell2(sym.x, sym.y, 'line', window.LINE_YELLOW)
+    puzzle.updateCell2(...sym, 'line', window.LINE_YELLOW)
   }
 
   if (depth < NODE_DEPTH) nodes++
@@ -404,12 +405,12 @@ window.drawPath = function(puzzle, path, target='puzzle') {
     // Unflag the cell, move into it, and reflag it
     cell.line = window.LINE_NONE
     window.onMove(41 * dx, 41 * dy)
-    if (puzzle.symmetry == null) {
+    if (!puzzle.isSymmetry()) {
       cell.line = window.LINE_BLACK
     } else {
       cell.line = window.LINE_BLUE
       var sym = puzzle.getSymmetricalPos(x, y)
-      puzzle.updateCell2(sym.x, sym.y, 'line', window.LINE_YELLOW)
+      puzzle.updateCell2(...sym, 'line', window.LINE_YELLOW)
     }
   }
   var cell = puzzle.getCell(x, y)

@@ -1,6 +1,6 @@
 namespace(function() {
 
-var BBOX_DEBUG = false
+let BBOX_DEBUG = false
 
 function clamp(value, min, max) {
   return value < min ? min : value > max ? max : value
@@ -15,7 +15,7 @@ class BoundingBox {
       data.svg.appendChild(this.debug)
       this.debug.setAttribute('opacity', 0.5)
       this.debug.setAttribute('style', 'pointer-events: none;')
-      if (data.puzzle.symmetry == null) {
+      if (!data.puzzle.isSymmetry()) {
         this.debug.setAttribute('fill', 'white')
       } else {
         if (this.sym !== true) {
@@ -46,10 +46,10 @@ class BoundingBox {
   }
 
   inMain(x, y) {
-    var inMainBox =
+    let inMainBox =
       (this.x1 < x && x < this.x2) &&
       (this.y1 < y && y < this.y2)
-    var inRawBox =
+    let inRawBox =
       (this.raw.x1 < x && x < this.raw.x2) &&
       (this.raw.y1 < y && y < this.raw.y2)
 
@@ -63,10 +63,11 @@ class BoundingBox {
     this.y2 = this.raw.y2
 
     // Check for endpoint adjustment
+    let cell;
     if (this.sym !== true) {
-      var cell = data.puzzle.getCell(data.pos.x, data.pos.y)
+      cell = data.puzzle.getCell(data.pos.x, data.pos.y)
     } else {
-      var cell = data.puzzle.getSymmetricalCell(data.sym.x, data.sym.y)
+      cell = data.puzzle.getSymmetricalCell(data.sym.x, data.sym.y)
     }
     if (cell.end === 'left') {
       this.x1 -= 24
@@ -105,7 +106,7 @@ class PathSegment {
     this.circ.setAttribute('cx', data.bbox.middle.x)
     this.circ.setAttribute('cy', data.bbox.middle.y)
 
-    if (data.puzzle.pillar === true) {
+    if (data.puzzle.isPillar()) {
       // cx/cy are updated in redraw(), since pillarCirc tracks the cursor
       this.pillarCirc.setAttribute('cy', data.bbox.middle.y)
       this.pillarCirc.setAttribute('r', 12)
@@ -120,7 +121,7 @@ class PathSegment {
       }
     }
 
-    if (data.puzzle.symmetry == null) {
+    if (!data.puzzle.isSymmetry()) {
       this.poly1.setAttribute('class', 'line-1 ' + data.svg.id)
       this.circ.setAttribute('class', 'line-1 ' + data.svg.id)
       this.poly2.setAttribute('class', 'line-1 ' + data.svg.id)
@@ -146,11 +147,11 @@ class PathSegment {
       this.symCirc.setAttribute('cx', data.symbbox.middle.x)
       this.symCirc.setAttribute('cy', data.symbbox.middle.y)
 
-      if (data.puzzle.pillar === true) {
+      if (data.puzzle.isPillar()) {
         // cx/cy are updated in redraw(), since symPillarCirc tracks the cursor
         this.symPillarCirc.setAttribute('cy', data.symbbox.middle.y)
         this.symPillarCirc.setAttribute('r', 12)
-        var symmetricalDir = getSymmetricalDir(data.puzzle, this.dir)
+        let symmetricalDir = getSymmetricalDir(data.puzzle, this.dir)
         if (data.sym.x === 0 && symmetricalDir === MOVE_RIGHT) {
           this.symPillarCirc.setAttribute('cx', data.symbbox.x1)
           this.symPillarCirc.setAttribute('static', true)
@@ -166,7 +167,7 @@ class PathSegment {
     if (this.dir === MOVE_NONE) { // Start point
       this.circ.setAttribute('r', 24)
       this.circ.setAttribute('class', this.circ.getAttribute('class') + ' start')
-      if (data.puzzle.symmetry != null) {
+      if (data.puzzle.isSymmetry()) {
         this.symCirc.setAttribute('r', 24)
         this.symCirc.setAttribute('class', this.symCirc.getAttribute('class') + ' start')
       }
@@ -174,7 +175,7 @@ class PathSegment {
       // Only insert poly1 in non-startpoints
       data.svg.insertBefore(this.poly1, data.cursor)
       this.circ.setAttribute('r', 12)
-      if (data.puzzle.symmetry != null) {
+      if (data.puzzle.isSymmetry()) {
         data.svg.insertBefore(this.symPoly1, data.cursor)
         this.symCirc.setAttribute('r', 12)
       }
@@ -186,7 +187,7 @@ class PathSegment {
     data.svg.removeChild(this.circ)
     data.svg.removeChild(this.poly2)
     data.svg.removeChild(this.pillarCirc)
-    if (data.puzzle.symmetry != null) {
+    if (data.puzzle.isSymmetry()) {
       data.svg.removeChild(this.symPoly1)
       data.svg.removeChild(this.symCirc)
       data.svg.removeChild(this.symPoly2)
@@ -196,33 +197,43 @@ class PathSegment {
 
   redraw() { // Uses raw bbox because of endpoints
     // Move the cursor and related objects
-    var x = clamp(data.x, data.bbox.x1, data.bbox.x2)
-    var y = clamp(data.y, data.bbox.y1, data.bbox.y2)
+    let x = clamp(data.x, data.bbox.x1, data.bbox.x2)
+    let y = clamp(data.y, data.bbox.y1, data.bbox.y2)
     data.cursor.setAttribute('cx', x)
     data.cursor.setAttribute('cy', y)
     if (data.cursorImage != null) {
       data.cursorImage.setAttribute('x', x)
       data.cursorImage.setAttribute('y', y)
     }
-    if (data.puzzle.symmetry != null) {
-      data.symcursor.setAttribute('cx', this._reflX(x))
-      data.symcursor.setAttribute('cy', this._reflY(y))
+    if (data.puzzle.isSymmetry()) {
+      if (data.puzzle.symmetry[2]) {
+        data.symcursor.setAttribute('cx', this._reflY(y))
+        data.symcursor.setAttribute('cy', this._reflX(x))
+      } else {
+        data.symcursor.setAttribute('cx', this._reflX(x))
+        data.symcursor.setAttribute('cy', this._reflY(y))
+      }
     }
-    if (data.puzzle.pillar === true) {
+    if (data.puzzle.isPillar()) {
       if (this.pillarCirc.getAttribute('static') == null) {
         this.pillarCirc.setAttribute('cx', x)
         this.pillarCirc.setAttribute('cy', y)
       }
-      if (data.puzzle.symmetry != null) {
+      if (data.puzzle.isSymmetry()) {
         if (this.symPillarCirc.getAttribute('static') == null) {
-          this.symPillarCirc.setAttribute('cx', this._reflX(x))
-          this.symPillarCirc.setAttribute('cy', this._reflY(y))
+          if (data.puzzle.symmetry[2]) {
+            this.symPillarCirc.setAttribute('cx', this._reflY(y))
+            this.symPillarCirc.setAttribute('cy', this._reflX(x))
+          } else {
+            this.symPillarCirc.setAttribute('cx', this._reflX(x))
+            this.symPillarCirc.setAttribute('cy', this._reflY(y))
+          }
         }
       }
     }
 
     // Draw the first-half box
-    var points1 = JSON.parse(JSON.stringify(data.bbox.raw))
+    let points1 = JSON.parse(JSON.stringify(data.bbox.raw))
     if (this.dir === MOVE_LEFT) {
       points1.x1 = clamp(data.x, data.bbox.middle.x, data.bbox.x2)
     } else if (this.dir === MOVE_RIGHT) {
@@ -239,10 +250,10 @@ class PathSegment {
       points1.x2 + ' ' + points1.y1
     )
 
-    var firstHalf = false
-    var isEnd = (data.puzzle.grid[data.pos.x][data.pos.y].end != null)
+    let firstHalf = false
+    let isEnd = (data.puzzle.grid[data.pos.x][data.pos.y].end != null)
     // The second half of the line uses the raw so that it can enter the endpoint properly.
-    var points2 = JSON.parse(JSON.stringify(data.bbox.raw))
+    let points2 = JSON.parse(JSON.stringify(data.bbox.raw))
     if (data.x < data.bbox.middle.x && this.dir !== MOVE_RIGHT) {
       points2.x1 = clamp(data.x, data.bbox.x1, data.bbox.middle.x)
       points2.x2 = data.bbox.middle.x
@@ -292,48 +303,33 @@ class PathSegment {
     }
 
     // Draw the symmetrical path based on the original one
-    if (data.puzzle.symmetry != null) {
-      this.symPoly1.setAttribute('points',
-        this._reflX(points1.x2) + ' ' + this._reflY(points1.y2) + ',' +
-        this._reflX(points1.x2) + ' ' + this._reflY(points1.y1) + ',' +
-        this._reflX(points1.x1) + ' ' + this._reflY(points1.y1) + ',' +
-        this._reflX(points1.x1) + ' ' + this._reflY(points1.y2)
-      )
-
-      this.symPoly2.setAttribute('points',
-        this._reflX(points2.x2) + ' ' + this._reflY(points2.y2) + ',' +
-        this._reflX(points2.x2) + ' ' + this._reflY(points2.y1) + ',' +
-        this._reflX(points2.x1) + ' ' + this._reflY(points2.y1) + ',' +
-        this._reflX(points2.x1) + ' ' + this._reflY(points2.y2)
-      )
-
+    if (data.puzzle.isSymmetry()) {
+      this.symPoly1.setAttribute('points', this._getPoints(points1))
+      this.symPoly2.setAttribute('points', this._getPoints(points2))
       this.symCirc.setAttribute('opacity', this.circ.getAttribute('opacity'))
       this.symPoly2.setAttribute('opacity', this.poly2.getAttribute('opacity'))
     }
   }
 
+  _getPoints(point) {
+    return [[point.x2, point.y2], [point.x2, point.y1], [point.x1, point.y1], [point.x1, point.y2]].map(x => {
+      if (data.puzzle.symmetry[2]) return this._reflY(x[1]) + ' ' + this._reflX(x[0]);
+      else                         return this._reflX(x[0]) + ' ' + this._reflY(x[1]);
+    }).join(',')
+  }
+
   _reflX(x) {
-    if (data.puzzle.symmetry == null) return x
-    if (data.puzzle.symmetry.x === true) {
-      // Mirror position inside the bounding box
-      return (data.bbox.middle.x - x) + data.symbbox.middle.x
-    }
-    // Copy position inside the bounding box
-    return (x - data.bbox.middle.x) + data.symbbox.middle.x
+    const q = [x, (data.bbox.middle.x - x) + data.symbbox.middle.x, (x - data.bbox.middle.x) + data.symbbox.middle.x];
+    return q[data.puzzle.symmetry[0]];
   }
 
   _reflY(y) {
-    if (data.puzzle.symmetry == null) return y
-    if (data.puzzle.symmetry.y === true) {
-      // Mirror position inside the bounding box
-      return (data.bbox.middle.y - y) + data.symbbox.middle.y
-    }
-    // Copy position inside the bounding box
-    return (y - data.bbox.middle.y) + data.symbbox.middle.y
+    const q = [y, (data.bbox.middle.y - y) + data.symbbox.middle.y, (y - data.bbox.middle.y) + data.symbbox.middle.y];
+    return q[data.puzzle.symmetry[1]];
   }
 }
 
-var data = {}
+let data = {}
 
 function clearGrid(svg, puzzle) {
   if (data.bbox != null && data.bbox.debug != null) {
@@ -356,23 +352,17 @@ function clearGrid(svg, puzzle) {
 
 // This copy is an exact copy of puzzle.getSymmetricalDir, except that it uses MOVE_* values instead of strings
 function getSymmetricalDir(puzzle, dir) {
-  if (puzzle.symmetry != null) {
-    if (puzzle.symmetry.x === true) {
-      if (dir === MOVE_LEFT) return MOVE_RIGHT
-      if (dir === MOVE_RIGHT) return MOVE_LEFT
-    }
-    if (puzzle.symmetry.y === true) {
-      if (dir === MOVE_TOP) return MOVE_BOTTOM
-      if (dir === MOVE_BOTTOM) return MOVE_TOP
-    }
-  }
-  return dir
+  // NONE, LEFT, RIGHT, TOP, BOTTOM
+  if (puzzle.symmetry[0] === 1) dir = [MOVE_NONE, MOVE_RIGHT, MOVE_LEFT, MOVE_TOP, MOVE_BOTTOM][dir];
+  if (puzzle.symmetry[1] === 1) dir = [MOVE_NONE, MOVE_LEFT, MOVE_RIGHT, MOVE_BOTTOM, MOVE_TOP][dir];
+  if (puzzle.symmetry[2] === true) dir = [MOVE_NONE, MOVE_TOP, MOVE_BOTTOM, MOVE_LEFT, MOVE_RIGHT][dir];
+  return dir;
 }
 
 window.trace = function(event, puzzle, pos, start, symStart=null) {
   /*if (data.start == null) {*/
   if (data.tracing !== true) { // could be undefined or false
-    var svg = start.parentElement
+    let svg = start.parentElement
     data.tracing = true
     window.PLAY_SOUND('start')
     // Cleans drawn lines & puzzle state
@@ -387,17 +377,17 @@ window.trace = function(event, puzzle, pos, start, symStart=null) {
     data.tracing = false
 
     // At endpoint and in main box
-    var cell = puzzle.getCell(data.pos.x, data.pos.y)
+    let cell = puzzle.getCell(data.pos.x, data.pos.y)
     if (cell.end != null && data.bbox.inMain(data.x, data.y)) {
       data.cursor.onpointerdown = null
       setTimeout(function() { // Run validation asynchronously so we can free the pointer immediately.
         puzzle.endPoint = data.pos
         puzzle.path = [puzzle.startPoint];
-        for (var i=1; i<data.path.length; i++) puzzle.path.push(data.path[i].dir)
+        for (let i=1; i<data.path.length; i++) puzzle.path.push(data.path[i].dir)
         puzzle.path.push(0)
         window.validate(puzzle, false) // We want all invalid elements so we can show the user.
 
-        for (var negation of puzzle.negations) {
+        for (let negation of puzzle.negations) {
           console.debug('Rendering negation', negation)
           data.animations.insertRule('.' + data.svg.id + '_' + negation.source.x + '_' + negation.source.y + ' {animation: 0.75s 1 forwards fade}\n')
           data.animations.insertRule('.' + data.svg.id + '_' + negation.target.x + '_' + negation.target.y + ' {animation: 0.75s 1 forwards fade}\n')
@@ -417,7 +407,7 @@ window.trace = function(event, puzzle, pos, start, symStart=null) {
           data.animations.insertRule('.' + data.svg.id + ' {animation: 1s 1 forwards line-fail !important}\n')
           // Get list of invalid elements
           if (!puzzle.disableFlash) {
-            for (var invalidElement of puzzle.invalidElements) {
+            for (let invalidElement of puzzle.invalidElements) {
               data.animations.insertRule('.' + data.svg.id + '_' + invalidElement.x + '_' + invalidElement.y + ' {animation: 0.4s 20 alternate-reverse error}\n')
             }
           }
@@ -442,8 +432,8 @@ window.trace = function(event, puzzle, pos, start, symStart=null) {
 
 window.clearAnimations = function() {
   if (data.animations == null) return
-  for (var i=0; i<data.animations.cssRules.length; i++) {
-    var rule = data.animations.cssRules[i]
+  for (let i=0; i<data.animations.cssRules.length; i++) {
+    let rule = data.animations.cssRules[i]
     if (rule.selectorText != null && rule.selectorText.startsWith('.' + data.svg.id)) {
       data.animations.deleteRule(i--)
     }
@@ -451,10 +441,10 @@ window.clearAnimations = function() {
 }
 
 window.onTraceStart = function(puzzle, pos, svg, start, symStart=null) {
-  var x = parseFloat(start.getAttribute('cx'))
-  var y = parseFloat(start.getAttribute('cy'))
+  let x = parseFloat(start.getAttribute('cx'))
+  let y = parseFloat(start.getAttribute('cy'))
 
-  var cursor = createElement('circle')
+  let cursor = createElement('circle')
   cursor.setAttribute('r', 12)
   cursor.setAttribute('fill', 'var(--line-default)')
   cursor.setAttribute('stroke', 'black')
@@ -487,7 +477,8 @@ window.onTraceStart = function(puzzle, pos, svg, start, symStart=null) {
   data.x = x
   data.y = y
   data.pos = pos
-  data.sym = puzzle.getSymmetricalPos(pos.x, pos.y)
+  let sym = puzzle.getSymmetricalPos(pos.x, pos.y);
+  data.sym = {x: sym[0], y: sym[1]};
   data.puzzle = puzzle
   data.path = []
   puzzle.startPoint = {'x': pos.x, 'y': pos.y}
@@ -500,7 +491,7 @@ window.onTraceStart = function(puzzle, pos, svg, start, symStart=null) {
     data.bbox = new BoundingBox(x - 12, x + 12, y - 12, y + 12)
   }
 
-  for (var styleSheet of document.styleSheets) {
+  for (let styleSheet of document.styleSheets) {
     if (styleSheet.title === 'animations') {
       data.animations = styleSheet
       break
@@ -509,7 +500,7 @@ window.onTraceStart = function(puzzle, pos, svg, start, symStart=null) {
 
   clearAnimations()
 
-  if (puzzle.symmetry == null) {
+  if (!puzzle.isSymmetry()) {
     data.puzzle.updateCell2(data.pos.x, data.pos.y, 'type', 'line')
     data.puzzle.updateCell2(data.pos.x, data.pos.y, 'line', window.LINE_BLACK)
   } else {
@@ -518,13 +509,13 @@ window.onTraceStart = function(puzzle, pos, svg, start, symStart=null) {
     data.puzzle.updateCell2(data.sym.x, data.sym.y, 'type', 'line')
     data.puzzle.updateCell2(data.sym.x, data.sym.y, 'line', window.LINE_YELLOW)
 
-    var dx = parseFloat(symStart.getAttribute('cx')) - data.x
-    var dy = parseFloat(symStart.getAttribute('cy')) - data.y
+    let dx = parseFloat(symStart.getAttribute('cx')) - data.x
+    let dy = parseFloat(symStart.getAttribute('cy')) - data.y
     data.symbbox = new BoundingBox(
-      data.bbox.raw.x1 + dx,
-      data.bbox.raw.x2 + dx,
-      data.bbox.raw.y1 + dy,
-      data.bbox.raw.y2 + dy,
+      (data.puzzle.symmetry[2] ? data.bbox.raw.y1 : data.bbox.raw.x1 + dx),
+      (data.puzzle.symmetry[2] ? data.bbox.raw.y2 : data.bbox.raw.x2 + dx),
+      (data.puzzle.symmetry[2] ? data.bbox.raw.x1 : data.bbox.raw.y1 + dy),
+      (data.puzzle.symmetry[2] ? data.bbox.raw.x2 : data.bbox.raw.y2 + dy),
       sym = true)
 
     data.symcursor = createElement('circle')
@@ -558,7 +549,7 @@ function hookMovementEvents(start) {
   if (start.requestPointerLock != null) start.requestPointerLock()
   if (start.mozRequestPointerLock != null) start.mozRequestPointerLock()
 
-  var sens = parseFloat(localStorage.sensitivity)
+  let sens = parseFloat(localStorage.sensitivity)
   document.onmousemove = function(event) {
     // Working around a race condition where movement events fire after the handler is removed.
     if (data.tracing !== true) return
@@ -580,8 +571,8 @@ function hookMovementEvents(start) {
   document.ontouchmove = function(event) {
     if (data.tracing !== true) return
 
-    var eventIsWithinPuzzle = false
-    for (var node = event.target; node != null; node = node.parentElement) {
+    let eventIsWithinPuzzle = false
+    for (let node = event.target; node != null; node = node.parentElement) {
       if (node == data.svg) {
         eventIsWithinPuzzle = true
         break
@@ -590,7 +581,7 @@ function hookMovementEvents(start) {
     if (!eventIsWithinPuzzle) return // Ignore drag events that aren't within the puzzle
     // event.preventDefault() // Prevent accidental scrolling if the touch event is within the puzzle.
 
-    var newPos = {
+    let newPos = {
       'x': event.pageX || event.touches[0].pageX,
       'y': event.pageY || event.touches[0].pageY,
     }
@@ -600,7 +591,7 @@ function hookMovementEvents(start) {
   document.ontouchend = function(event) {
     data.lastTouchPos = null
     // Only call window.trace (to stop tracing) if we're really in an endpoint.
-    var cell = data.puzzle.getCell(data.pos.x, data.pos.y)
+    let cell = data.puzzle.getCell(data.pos.x, data.pos.y)
     if (cell.end != null && data.bbox.inMain(data.x, data.y)) {
       window.trace(event, data.puzzle, null, null, null)
     }
@@ -608,16 +599,16 @@ function hookMovementEvents(start) {
 }
 
 // @Volatile -- must match order of PATH_* in solve
-var MOVE_NONE   = 0
-var MOVE_LEFT   = 1
-var MOVE_RIGHT  = 2
-var MOVE_TOP    = 3
-var MOVE_BOTTOM = 4
+let MOVE_NONE   = 0
+let MOVE_LEFT   = 1
+let MOVE_RIGHT  = 2
+let MOVE_TOP    = 3
+let MOVE_BOTTOM = 4
 
 window.onMove = function(dx, dy) {
   {
     // Also handles some collision
-    var collidedWith = pushCursor(dx, dy)
+    let collidedWith = pushCursor(dx, dy)
     console.spam('Collided with', collidedWith)
   }
 
@@ -625,43 +616,43 @@ window.onMove = function(dx, dy) {
     gapAndSymmetryCollision()
 
     // Potentially move the location to a new cell, and make absolute boundary checks
-    var moveDir = move()
+    let moveDir = move()
     data.path[data.path.length - 1].redraw()
     if (moveDir === MOVE_NONE) break
     console.debug('Moved', ['none', 'left', 'right', 'top', 'bottom'][moveDir])
 
     // Potentially adjust data.x/data.y if our position went around a pillar
-    if (data.puzzle.pillar === true) pillarWrap(moveDir)
+    pillarWrap(moveDir)
 
-    var lastDir = data.path[data.path.length - 1].dir
-    var backedUp = ((moveDir === MOVE_LEFT && lastDir === MOVE_RIGHT)
+    let lastDir = data.path[data.path.length - 1].dir
+    let backedUp = ((moveDir === MOVE_LEFT && lastDir === MOVE_RIGHT)
                  || (moveDir === MOVE_RIGHT && lastDir === MOVE_LEFT)
                  || (moveDir === MOVE_TOP && lastDir === MOVE_BOTTOM)
                  || (moveDir === MOVE_BOTTOM && lastDir === MOVE_TOP))
-
-    if (data.puzzle.symmetry != null) {
-      var symMoveDir = getSymmetricalDir(data.puzzle, moveDir)
+    let symMoveDir;
+    if (data.puzzle.isSymmetry()) {
+      symMoveDir = getSymmetricalDir(data.puzzle, moveDir)
     }
 
     // If we backed up, remove a path segment and mark the old cell as unvisited
     if (backedUp) {
       data.path.pop().destroy()
       data.puzzle.updateCell2(data.pos.x, data.pos.y, 'line', window.LINE_NONE)
-      if (data.puzzle.symmetry != null) {
+      if (data.puzzle.isSymmetry()) {
         data.puzzle.updateCell2(data.sym.x, data.sym.y, 'line', window.LINE_NONE)
       }
     }
 
     // Move to the next cell
     changePos(data.bbox, data.pos, moveDir)
-    if (data.puzzle.symmetry != null) {
+    if (data.puzzle.isSymmetry()) {
       changePos(data.symbbox, data.sym, symMoveDir)
     }
 
     // If we didn't back up, add a path segment and mark the new cell as visited
     if (!backedUp) {
       data.path.push(new PathSegment(moveDir))
-      if (data.puzzle.symmetry == null) {
+      if (!data.puzzle.isSymmetry()) {
         data.puzzle.updateCell2(data.pos.x, data.pos.y, 'line', window.LINE_BLACK)
       } else {
         data.puzzle.updateCell2(data.pos.x, data.pos.y, 'line', window.LINE_BLUE)
@@ -674,7 +665,7 @@ window.onMove = function(dx, dy) {
 // Helper function for pushCursor. Used to determine the direction and magnitude of redirection.
 function push(dx, dy, dir, targetDir) {
   // Fraction of movement to redirect in the other direction
-  var movementRatio = null
+  let movementRatio = null
   if (targetDir === 'left' || targetDir === 'top') {
     movementRatio = -3
   } else if (targetDir === 'right' || targetDir === 'bottom') {
@@ -682,14 +673,14 @@ function push(dx, dy, dir, targetDir) {
   }
 
   if (dir === 'left') {
-    var overshoot = data.bbox.x1 - (data.x + dx) + 12
+    let overshoot = data.bbox.x1 - (data.x + dx) + 12
     if (overshoot > 0) {
       data.y += dy + overshoot / movementRatio
       data.x = data.bbox.x1 + 12
       return true
     }
   } else if (dir === 'right') {
-    var overshoot = (data.x + dx) - data.bbox.x2 + 12
+    let overshoot = (data.x + dx) - data.bbox.x2 + 12
     if (overshoot > 0) {
       data.y += dy + overshoot / movementRatio
       data.x = data.bbox.x2 - 12
@@ -699,14 +690,14 @@ function push(dx, dy, dir, targetDir) {
     data.y += dy + Math.abs(dx) / movementRatio
     return true
   } else if (dir === 'top') {
-    var overshoot = data.bbox.y1 - (data.y + dy) + 12
+    let overshoot = data.bbox.y1 - (data.y + dy) + 12
     if (overshoot > 0) {
       data.x += dx + overshoot / movementRatio
       data.y = data.bbox.y1 + 12
       return true
     }
   } else if (dir === 'bottom') {
-    var overshoot = (data.y + dy) - data.bbox.y2 + 12
+    let overshoot = (data.y + dy) - data.bbox.y2 + 12
     if (overshoot > 0) {
       data.x += dx + overshoot / movementRatio
       data.y = data.bbox.y2 - 12
@@ -723,27 +714,27 @@ function push(dx, dy, dir, targetDir) {
 // will be strictly linear. Returns a string for logging purposes only.
 function pushCursor(dx, dy) {
   // Outer wall collision
-  var cell = data.puzzle.getCell(data.pos.x, data.pos.y)
+  let cell = data.puzzle.getCell(data.pos.x, data.pos.y)
   if (cell == null) return 'nothing'
 
   // Only consider non-endpoints or endpoints which are parallel
   if ([undefined, 'top', 'bottom'].includes(cell.end)) {
-    var leftCell = data.puzzle.getCell(data.pos.x - 1, data.pos.y)
+    let leftCell = data.puzzle.getCell(data.pos.x - 1, data.pos.y)
     if (leftCell == null || leftCell.gap === window.GAP_FULL) {
       if (push(dx, dy, 'left', 'top')) return 'left outer wall'
     }
-    var rightCell = data.puzzle.getCell(data.pos.x + 1, data.pos.y)
+    let rightCell = data.puzzle.getCell(data.pos.x + 1, data.pos.y)
     if (rightCell == null || rightCell.gap === window.GAP_FULL) {
       if (push(dx, dy, 'right', 'top')) return 'right outer wall'
     }
   }
   // Only consider non-endpoints or endpoints which are parallel
   if ([undefined, 'left', 'right'].includes(cell.end)) {
-    var topCell = data.puzzle.getCell(data.pos.x, data.pos.y - 1)
+    let topCell = data.puzzle.getCell(data.pos.x, data.pos.y - 1)
     if (topCell == null || topCell.gap === window.GAP_FULL) {
       if (push(dx, dy, 'top', 'right')) return 'top outer wall'
     }
-    var bottomCell = data.puzzle.getCell(data.pos.x, data.pos.y + 1)
+    let bottomCell = data.puzzle.getCell(data.pos.x, data.pos.y + 1)
     if (bottomCell == null || bottomCell.gap === window.GAP_FULL) {
       if (push(dx, dy, 'bottom', 'right')) return 'bottom outer wall'
     }
@@ -772,7 +763,7 @@ function pushCursor(dx, dy) {
 
   // Intersection & endpoint collision
   // Ratio of movement to be considered turning at an intersection
-  var turnMod = 2
+  let turnMod = 2
   if ((data.pos.x%2 === 0 && data.pos.y%2 === 0) || cell.end != null) {
     if (data.x < data.bbox.middle.x) {
       push(dx, dy, 'topbottom', 'right')
@@ -827,19 +818,19 @@ function pushCursor(dx, dy) {
 // Check to see if we collided with any gaps, or with a symmetrical line.
 // In either case, abruptly zero momentum.
 function gapAndSymmetryCollision() {
-  var lastDir = data.path[data.path.length - 1].dir
-  var cell = data.puzzle.getCell(data.pos.x, data.pos.y)
+  let lastDir = data.path[data.path.length - 1].dir
+  let cell = data.puzzle.getCell(data.pos.x, data.pos.y)
   if (cell == null) return
 
-  var gapSize = 0
+  let gapSize = 0
   if (cell.gap === window.GAP_BREAK) {
     console.spam('Collided with a gap')
     gapSize = 21
-  } else if (data.puzzle.symmetry != null) {
+  } else if (data.puzzle.isSymmetry()) {
     if (data.sym.x === data.pos.x && data.sym.y === data.pos.y) {
       console.spam('Collided with our symmetrical line')
       gapSize = 13
-    } else if (data.puzzle.getCell(data.sym.x, data.sym.y).gap === window.GAP_BREAK) {
+    } else if (data.puzzle.getCell(data.sym.x, data.sym.y)?.gap === window.GAP_BREAK) {
       console.spam('Symmetrical line hit a gap')
       gapSize = 21
     }
@@ -861,19 +852,27 @@ function gapAndSymmetryCollision() {
 // i.e. not out of bounds. Reports the direction we are going to move (or none),
 // but does not actually change data.pos
 function move() {
-  var lastDir = data.path[data.path.length - 1].dir
+  let lastDir = data.path[data.path.length - 1].dir
+  let jank = 0;
+  if (data.puzzle.isTranslateJank(data.pos.x, data.pos.y)) {
+    let sym = data.puzzle.getSymmetricalPos(data.pos.x, data.pos.y);
+         if (data.pos.x < sym[0]) jank |= 1;
+    else if (data.pos.x > sym[0]) jank |= 2;
+         if (data.pos.y > sym[1]) jank |= 4;
+    else if (data.pos.y < sym[1]) jank |= 8;
+  }
 
   if (data.x < data.bbox.x1 + 12) { // Moving left
-    var cell = data.puzzle.getCell(data.pos.x - 1, data.pos.y)
+    let cell = data.puzzle.getCell(data.pos.x - 1, data.pos.y)
     if (cell == null || cell.type !== 'line' || cell.gap === window.GAP_FULL) {
       console.spam('Collided with outside / gap-2', cell)
       data.x = data.bbox.x1 + 12
     } else if (cell.line > window.LINE_NONE && lastDir !== MOVE_RIGHT) {
       console.spam('Collided with other line', cell.line)
       data.x = data.bbox.x1 + 12
-    } else if (data.puzzle.symmetry != null) {
-      var symCell = data.puzzle.getSymmetricalCell(data.pos.x - 1, data.pos.y)
-      if (symCell == null || symCell.type !== 'line' || symCell.gap === window.GAP_FULL) {
+    } else if (data.puzzle.isSymmetry()) {
+      let symCell = data.puzzle.getSymmetricalCell(data.pos.x - 1, data.pos.y)
+      if (jank & 1 || symCell == null || symCell.type !== 'line' || symCell.gap === window.GAP_FULL) {
         console.spam('Collided with symmetrical outside / gap-2', cell)
         data.x = data.bbox.x1 + 12
       }
@@ -882,16 +881,16 @@ function move() {
       return MOVE_LEFT
     }
   } else if (data.x > data.bbox.x2 - 12) { // Moving right
-    var cell = data.puzzle.getCell(data.pos.x + 1, data.pos.y)
+    let cell = data.puzzle.getCell(data.pos.x + 1, data.pos.y)
     if (cell == null || cell.type !== 'line' || cell.gap === window.GAP_FULL) {
       console.spam('Collided with outside / gap-2', cell)
       data.x = data.bbox.x2 - 12
     } else if (cell.line > window.LINE_NONE && lastDir !== MOVE_LEFT) {
       console.spam('Collided with other line', cell.line)
       data.x = data.bbox.x2 - 12
-    } else if (data.puzzle.symmetry != null) {
-      var symCell = data.puzzle.getSymmetricalCell(data.pos.x + 1, data.pos.y)
-      if (symCell == null || symCell.type !== 'line' || symCell.gap === window.GAP_FULL) {
+    } else if (data.puzzle.isSymmetry()) {
+      let symCell = data.puzzle.getSymmetricalCell(data.pos.x + 1, data.pos.y)
+      if (jank & 2 || symCell == null || symCell.type !== 'line' || symCell.gap === window.GAP_FULL) {
         console.spam('Collided with symmetrical outside / gap-2', cell)
         data.x = data.bbox.x2 - 12
       }
@@ -900,16 +899,16 @@ function move() {
       return MOVE_RIGHT
     }
   } else if (data.y < data.bbox.y1 + 12) { // Moving up
-    var cell = data.puzzle.getCell(data.pos.x, data.pos.y - 1)
+    let cell = data.puzzle.getCell(data.pos.x, data.pos.y - 1)
     if (cell == null || cell.type !== 'line' || cell.gap === window.GAP_FULL) {
       console.spam('Collided with outside / gap-2', cell)
       data.y = data.bbox.y1 + 12
     } else if (cell.line > window.LINE_NONE && lastDir !== MOVE_BOTTOM) {
       console.spam('Collided with other line', cell.line)
       data.y = data.bbox.y1 + 12
-    } else if (data.puzzle.symmetry != null) {
-      var symCell = data.puzzle.getSymmetricalCell(data.pos.x, data.pos.y - 1)
-      if (symCell == null || symCell.type !== 'line' || symCell.gap === window.GAP_FULL) {
+    } else if (data.puzzle.isSymmetry()) {
+      let symCell = data.puzzle.getSymmetricalCell(data.pos.x, data.pos.y - 1)
+      if (jank & 4 || symCell == null || symCell.type !== 'line' || symCell.gap === window.GAP_FULL) {
         console.spam('Collided with symmetrical outside / gap-2', cell)
         data.y = data.bbox.y1 + 12
       }
@@ -918,16 +917,16 @@ function move() {
       return MOVE_TOP
     }
   } else if (data.y > data.bbox.y2 - 12) { // Moving down
-    var cell = data.puzzle.getCell(data.pos.x, data.pos.y + 1)
+    let cell = data.puzzle.getCell(data.pos.x, data.pos.y + 1)
     if (cell == null || cell.type !== 'line' || cell.gap === window.GAP_FULL) {
       console.spam('Collided with outside / gap-2')
       data.y = data.bbox.y2 - 12
     } else if (cell.line > window.LINE_NONE && lastDir !== MOVE_TOP) {
       console.spam('Collided with other line', cell.line)
       data.y = data.bbox.y2 - 12
-    } else if (data.puzzle.symmetry != null) {
-      var symCell = data.puzzle.getSymmetricalCell(data.pos.x, data.pos.y + 1)
-      if (symCell == null || symCell.type !== 'line' || symCell.gap === window.GAP_FULL) {
+    } else if (data.puzzle.isSymmetry()) {
+      let symCell = data.puzzle.getSymmetricalCell(data.pos.x, data.pos.y + 1)
+      if (jank & 8 || symCell == null || symCell.type !== 'line' || symCell.gap === window.GAP_FULL) {
         console.spam('Collided with symmetrical outside / gap-2', cell)
         data.y = data.bbox.y2 - 12
       }
@@ -943,11 +942,21 @@ function move() {
 // If so, wrap the cursor x to preserve momentum.
 // Note that this still does not change the position.
 function pillarWrap(moveDir) {
-  if (moveDir === MOVE_LEFT && data.pos.x === 0) {
-    data.x += data.puzzle.width * 41
+  if (data.puzzle.pillar[0]) {
+    if (moveDir === MOVE_LEFT && data.pos.x === 0) {
+      data.x += data.puzzle.width * 41
+    }
+    else if (moveDir === MOVE_RIGHT && data.pos.x === data.puzzle.width - 1) {
+      data.x -= data.puzzle.width * 41
+    }
   }
-  if (moveDir === MOVE_RIGHT && data.pos.x === data.puzzle.width - 1) {
-    data.x -= data.puzzle.width * 41
+  if (data.puzzle.pillar[0]) {
+    if (moveDir === MOVE_TOP && data.pos.y === 0) {
+      data.y += data.puzzle.height * 41
+    }
+    else if (moveDir === MOVE_BOTTOM && data.pos.y === data.puzzle.height - 1) {
+      data.y -= data.puzzle.height * 41
+    }
   }
 }
 
@@ -958,7 +967,7 @@ function changePos(bbox, pos, moveDir) {
   if (moveDir === MOVE_LEFT) {
     pos.x--
     // Wrap around the left
-    if (data.puzzle.pillar === true && pos.x < 0) {
+    if (data.puzzle.pillar[0] && pos.x < 0) {
       pos.x += data.puzzle.width
       bbox.shift('right', data.puzzle.width * 41 - 82)
       bbox.shift('right', 58)
@@ -968,7 +977,7 @@ function changePos(bbox, pos, moveDir) {
   } else if (moveDir === MOVE_RIGHT) {
     pos.x++
     // Wrap around to the right
-    if (data.puzzle.pillar === true && pos.x >= data.puzzle.width) {
+    if (data.puzzle.pillar[0] && pos.x >= data.puzzle.width) {
       pos.x -= data.puzzle.width
       bbox.shift('left', data.puzzle.width * 41 - 82)
       bbox.shift('left', 24)
@@ -977,10 +986,24 @@ function changePos(bbox, pos, moveDir) {
     }
   } else if (moveDir === MOVE_TOP) {
     pos.y--
-    bbox.shift('top', (pos.y%2 === 0 ? 24 : 58))
+    // Wrap around to the top
+    if (data.puzzle.pillar[1] && pos.y < 0) {
+      pos.y += data.puzzle.height
+      bbox.shift('bottom', data.puzzle.height * 41 - 82)
+      bbox.shift('bottom', 24)
+    } else {
+      bbox.shift('top', (pos.y%2 === 0 ? 24 : 58))
+    }
   } else if (moveDir === MOVE_BOTTOM) {
     pos.y++
-    bbox.shift('bottom', (pos.y%2 === 0 ? 24 : 58))
+    // Wrap around to the top
+    if (data.puzzle.pillar[1] && pos.y >= data.puzzle.height) {
+      pos.y -= data.puzzle.height
+      bbox.shift('top', data.puzzle.height * 41 - 82)
+      bbox.shift('top', 24)
+    } else {
+      bbox.shift('bottom', (pos.y%2 === 0 ? 24 : 58))
+    }
   }
 }
 

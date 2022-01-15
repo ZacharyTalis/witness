@@ -498,3 +498,28 @@ li button {
 .main > .hlist {
   margin: 16px;
 }
+
+#puzzleStyle {
+  border: 3px solid var(--text);
+  border-radius: 8px;
+  padding: 16px;
+  color: var(--text);
+}
+
+#puzzleStyle > .block {
+  margin: 1px;
+}
+
+#puzzleStyle label, select, option, input {
+  font-size: 16px;
+  border-radius: 2px;
+}
+
+#puzzleStyle .block > * {
+  margin: 4px;
+}
+
+#puzzleStyle .checkbox {
+  width: 10px;
+  height: 10px;
+}

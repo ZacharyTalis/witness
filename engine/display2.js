@@ -13,7 +13,7 @@ window.draw = function(puzzle, target='puzzle') {
     event.preventDefault()
   }
 
-  if (puzzle.pillar === true) {
+  if (puzzle.isPillar()) {
     // 41*width + 30*2 (padding) + 10*2 (border)
     var pixelWidth = 41 * puzzle.width + 80
   } else {
@@ -24,6 +24,8 @@ window.draw = function(puzzle, target='puzzle') {
   svg.setAttribute('viewbox', '0 0 ' + pixelWidth + ' ' + pixelHeight)
   svg.style.width = pixelWidth + 'px'
   svg.style.height = pixelHeight + 'px'
+  svg.style.transition = 'all 0s';
+  svg.style.transform = `perspective(${puzzle.transform.perspective}px) rotateX(${puzzle.transform.rotate[0]}deg) rotateY(${puzzle.transform.rotate[1]}deg) skew(${puzzle.transform.skew[0]}deg, ${puzzle.transform.skew[1]}deg) scale(${Number(puzzle.transform.scale[0]) / 100}, ${Number(puzzle.transform.scale[1]) / 100}) translate(${puzzle.transform.translate[0]}px, ${puzzle.transform.translate[1]}px)`
 
   var rect = createElement('rect')
   svg.appendChild(rect)
@@ -43,7 +45,7 @@ window.draw = function(puzzle, target='puzzle') {
   drawSymbols(puzzle, svg, target)
 
   // For pillar puzzles, add faders for the left and right sides
-  if (puzzle.pillar === true) {
+  if (puzzle.isPillar()) {
     var defs = window.createElement('defs')
     defs.id = 'cursorPos'
     defs.innerHTML = '' +
@@ -115,7 +117,7 @@ function drawCenters(puzzle, svg) {
   // @Hack that I am not fixing. This switches the puzzle's grid to a floodfilled grid
   // where null represents cells which are part of the outside
   var savedGrid = puzzle.switchToMaskedGrid()
-  if (puzzle.pillar === true) {
+  if (puzzle.isPillar()) {
     for (var y=1; y<puzzle.height; y += 2) {
       if (puzzle.getCell(-1, y) == null) continue; // Cell borders the outside
       var rect = createElement('rect')
@@ -171,7 +173,7 @@ function drawGrid(puzzle, svg, target) {
         if (cell?.gap === window.GAP_BREAK) continue;
         line.setAttribute('x1', (x-1)*41 + 52)
         // Adjust the length if it's a pillar -- the grid is not as wide!
-        if (puzzle.pillar === true && x === puzzle.width - 1) {
+        if (puzzle.isPillar() && x === puzzle.width - 1) {
           line.setAttribute('x2', (x+1)*41 + 40)
         } else {
           line.setAttribute('x2', (x+1)*41 + 52)
@@ -234,7 +236,7 @@ function drawGrid(puzzle, svg, target) {
     }
   }
   // Determine if left-side needs a 'wrap indicator'
-  if (puzzle.pillar === true) {
+  if (puzzle.isPillar()) {
     var x = 0;
     for (var y=0; y<puzzle.height; y+=2) {
       var cell = puzzle.getCell(x-1, y)
@@ -378,11 +380,11 @@ function drawStartAndEnd(puzzle, svg) {
       var cell = puzzle.grid[x][y]
       if (cell == null) continue;
       if (cell.end != null) {
-        if (puzzle.symmetry != null) {
+        if (puzzle.isSymmetry()) {
           var sym = puzzle.getSymmetricalPos(x, y)
-          var symCell = puzzle.getCell(sym.x, sym.y)
-          if (symCell.end == null) {
-            console.error('Found an endpoint at', x, y, 'but there was no symmetrical endpoint at', sym.x, sym.y)
+          var symCell = puzzle.getCell(...sym)
+          if (symCell.end == null && !puzzle.isTranslateJank(x, y)) {
+            console.error('Found an endpoint at', x, y, 'but there was no symmetrical endpoint at', sym)
           }
         }
         window.drawSymbolWithSvg(svg, {
@@ -390,6 +392,7 @@ function drawStartAndEnd(puzzle, svg) {
           'width': 58,
           'height': 58,
           'dir': cell.end,
+          'endType': cell.endType,
           'x': x*41 + 23,
           'y': y*41 + 23,
         })
@@ -397,18 +400,18 @@ function drawStartAndEnd(puzzle, svg) {
 
       if (cell.start === true) {
         var symStart = null
-        if (puzzle.symmetry != null) {
+        if (puzzle.isSymmetry()) {
           var sym = puzzle.getSymmetricalPos(x, y)
-          var symCell = puzzle.getCell(sym.x, sym.y)
+          var symCell = puzzle.getCell(...sym)
           if (symCell.start !== true) {
-            console.error('Found a startpoint at', x, y, 'but there was no symmetrical startpoint at', sym.x, sym.y)
+            console.error('Found a startpoint at', x, y, 'but there was no symmetrical startpoint at', sym)
           }
           window.drawSymbolWithSvg(svg, {
             'type': 'start',
             'width': 58,
             'height': 58,
-            'x': sym.x*41 + 23,
-            'y': sym.y*41 + 23,
+            'x': sym[0]*41 + 23,
+            'y': sym[1]*41 + 23,
           })
           symStart = svg.lastChild
           symStart.style.display = 'none'
