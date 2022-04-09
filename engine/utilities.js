@@ -1,4 +1,4 @@
-window.NAME = "http://looksy.kro.kr"
+window.NAME = "https://witness.zacharytalis.com"
 
 function namespace(code) {
   code()
