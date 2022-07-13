@@ -78,8 +78,8 @@ namespace(function () {
     while (perfectWrapper.firstChild) perfectWrapper.removeChild(perfectWrapper.firstChild);
     panelNo = localStorage[code].charCodeAt(currentPanel);
     window.puzzle = puzzles[panelNo];
-    if (puzzle.jerrymandering) solsWrapper.appendChild(document.createRange().createContextualFragment(`<svg id="jerrymandering" viewbox="0 0 15 15" style="width: 15px; height: 15px;"><path fill="(--text)" d="M 0 4.2 L 12.2 4.2 L 1.6 12 L 6 -0.4 L 10.8 12.2z"></path></svg>`));
-    if (puzzle.statuscoloring) solsWrapper.appendChild(document.createRange().createContextualFragment(`<svg id="statuscoloring" viewbox="0 0 15 15" style="width: 15px; height: 15px;"><path fill="(--text)" d="M9 4A1 1 0 003 4L1 4A1 1 0 0111 4C11 7 7 8 7 10L5 10C5 7 9 7 9 4M6 11A1 1 0 006 13 1 1 0 006 11z"></path></svg>`));
+    if (puzzle.jerrymandering) solsWrapper.appendChild(document.createRange().createContextualFragment(`<svg id="jerrymandering" viewbox="0 0 15 15" style="width: 15px; height: 15px;"><path fill="var(--text)" d="M 0 4.2 L 12.2 4.2 L 1.6 12 L 6 -0.4 L 10.8 12.2z"></path></svg>`));
+    if (puzzle.statuscoloring) solsWrapper.appendChild(document.createRange().createContextualFragment(`<svg id="statuscoloring" viewbox="0 0 15 15" style="width: 15px; height: 15px;"><path fill="var(--text)" d="M9 4A1 1 0 003 4L1 4A1 1 0 0111 4C11 7 7 8 7 10L5 10C5 7 9 7 9 4M6 11A1 1 0 006 13 1 1 0 006 11z"></path></svg>`));
     if (puzzle.sols > 1) {
       sols = new Set();
       for (let i = 0; i < puzzle.sols; i++) solsWrapper.appendChild(sol(i + 1));
