@@ -80,7 +80,13 @@ namespace(function () {
 
     window.updateList = function () {
         let newList = [];
-        for (let o of list) newList.push(serializePuzzle(deserializePuzzle(o)));
+        for (let o of list) {
+            if (!o.length) {
+                newList.push('');
+                continue;
+            }
+            newList.push(serializePuzzle(deserializePuzzle(o)));
+        }
         list = newList;
         document.documentElement.setAttribute('style', '');
         updateElems();

@@ -22,44 +22,6 @@ var nodes = 0
 
 var count = 0
 
-function countNodes(x, y, depth) {
-  // Check for collisions (outside, gap, self, other)
-  count++;
-  var cell = puzzle.getCell(x, y)
-  if (cell == null) return
-  if (window.CUSTOM_LINE > cell.gap && cell.gap > window.GAP_NONE) return
-  if (cell.line !== window.LINE_NONE) return
-
-  if (puzzle.symmetry == null) {
-    puzzle.updateCell2(x, y, 'line', window.LINE_BLACK)
-  } else {
-    var sym = puzzle.getSymmetricalPos(x, y)
-    if (puzzle.matchesSymmetricalPos(x, y, sym.x, sym.y)) return // Would collide with our reflection
-
-    var symCell = puzzle.getCell(sym.x, sym.y)
-    if (window.CUSTOM_LINE > symCell.gap && symCell.gap > window.GAP_NONE) return
-
-    puzzle.updateCell2(x, y, 'line', window.LINE_BLUE)
-    puzzle.updateCell2(sym.x, sym.y, 'line', window.LINE_YELLOW)
-  }
-
-  if (depth < NODE_DEPTH) {
-    nodes++
-
-    if (y%2 === 0) {
-      if (cell.gap !== window.CUSTOM_BRIDGE && symCell?.gap !== window.CUSTOM_BRIDGE_FLIPPED) countNodes(x - 1, y, depth + 1)
-      if (cell.gap !== window.CUSTOM_BRIDGE_FLIPPED && symCell?.gap !== window.CUSTOM_BRIDGE) countNodes(x + 1, y, depth + 1)
-    }
-
-    if (x%2 === 0) {
-      if (cell.gap !== window.CUSTOM_BRIDGE && symCell?.gap !== window.CUSTOM_BRIDGE_FLIPPED) countNodes(x, y - 1, depth + 1)
-      if (cell.gap !== window.CUSTOM_BRIDGE_FLIPPED && symCell?.gap !== window.CUSTOM_BRIDGE) countNodes(x, y + 1, depth + 1)
-    }
-  }
-
-  tailRecurse(x, y)
-}
-
 // Generates a solution via DFS recursive backtracking
 window.solve = function(p, partialCallback, finalCallback) {
   var start = (new Date()).getTime()
@@ -94,25 +56,23 @@ window.solve = function(p, partialCallback, finalCallback) {
   // } else { // 5x5 is the max for non-symmetry, non-pillar puzzles
   //   if (puzzle.width * puzzle.height <= 121) SOLVE_SYNC = true
   // }
-  console.log('Puzzle is a', puzzle.width, 'by', puzzle.height, 'solving ' + (SOLVE_SYNC ? 'sync' : 'async'))
+  // console.log('Puzzle is a', puzzle.width, 'by', puzzle.height, 'solving ' + (SOLVE_SYNC ? 'sync' : 'async'))
 
   // We pre-traverse the grid (only considering obvious failure states like going out of bounds),
   // and compute a total number of nodes that are reachable within some NODE_DEPTH steps.
   // Then, during actual traversal, we can compare the number of nodes reached to the precomputed count
   // to get a (fairly accurate) progress bar.
-  for (var pos of startPoints) {
-    countNodes(pos.x, pos.y, 0)
-  }
-  console.log('Pretraversal found', nodes, 'nodes')
-  percentages = []
-  for (var i=0; i<100; i++) {
-    percentages.push(Math.floor(i * nodes / 100))
-  }
+  // for (var pos of startPoints) {
+  //   countNodes(pos.x, pos.y, 0)
+  // }
+  // console.log('Pretraversal found', nodes, 'nodes')
+  // percentages = []
+  // for (var i=0; i<100; i++) {
+  //   percentages.push(Math.floor(i * nodes / 100))
+  // }
   nodes = 0
 
   solutionPaths = []
-  // Some reasonable default data, which will avoid crashes during the solveLoop.
-  var earlyExitData = [false, {'isEdge': false}, {'isEdge': false}]
   if (window.MAX_SOLUTIONS === 0) window.MAX_SOLUTIONS = 1000
 
   task = {
@@ -126,7 +86,7 @@ window.solve = function(p, partialCallback, finalCallback) {
           newTasks.push(function() {
             path = [pos]
             puzzle.startPoint = pos
-            return solveLoop(pos.x, pos.y, numEndpoints, earlyExitData, 0)
+            return solveLoop(pos.x, pos.y, numEndpoints, 0)
           })
         }(pos))
       }
@@ -194,10 +154,10 @@ function tailRecurse(x, y) {
 // Any performance efforts should be focused here.
 // Note: Most mechanics are NP (or harder), so don't feel bad about solving them by brute force.
 // https://arxiv.org/pdf/1804.10193.pdf
-function solveLoop(x, y, numEndpoints, earlyExitData, depth) {
+function solveLoop(x, y, numEndpoints, depth) {
   // Stop trying to solve once we reach our goal
   if (solutionPaths.length >= window.MAX_SOLUTIONS) return
-
+  count++;
   // Check for collisions (outside, gap, self, other)
   var cell = puzzle.getCell(x, y)
   // const _dir = [[0, 0], [-1, 0], [1, 0], [0, -1], [0, 1]];
@@ -209,7 +169,7 @@ function solveLoop(x, y, numEndpoints, earlyExitData, depth) {
   //   console.warn(x, y, JSON.parse(JSON.stringify(transpose(puzzle.grid.map(x => x.map(y => y?.line ?? 9))))), pathPrint, cell, cell?.line, cell?.gap);
   if (cell == null) return
   if (window.CUSTOM_LINE > cell.gap && cell.gap > window.GAP_NONE) return
-  if (cell.line !== window.LINE_NONE) return
+  if (cell.line !== window.LINE_NONE && cell.line !== undefined) return
 
   if (puzzle.symmetry == null) {
     puzzle.updateCell2(x, y, 'line', window.LINE_BLACK)
@@ -240,68 +200,27 @@ function solveLoop(x, y, numEndpoints, earlyExitData, depth) {
     if (numEndpoints === 0) return tailRecurse(x, y)
   }
 
-  // If you're seeing this code on witnesspuzzles, there should be an optimization that isnt used here.
-  var newEarlyExitData = earlyExitData
+  path.push(PATH_NONE)
 
-  if (SOLVE_SYNC || depth > SYNC_THRESHOLD) {
-    path.push(PATH_NONE)
-
-    // Recursion order (LRUD) is optimized for BL->TR and mid-start puzzles
-    if (y%2 === 0) {
-      path[path.length-1] = PATH_LEFT
-      if (cell.gap !== window.CUSTOM_BRIDGE && symCell?.gap !== window.CUSTOM_BRIDGE_FLIPPED) solveLoop(x - 1, y, numEndpoints, newEarlyExitData, depth + 1)
-
-      path[path.length-1] = PATH_RIGHT
-      if (cell.gap !== window.CUSTOM_BRIDGE_FLIPPED && symCell?.gap !== window.CUSTOM_BRIDGE) solveLoop(x + 1, y, numEndpoints, newEarlyExitData, depth + 1)
-    }
-
-    if (x%2 === 0) {
-      path[path.length-1] = PATH_TOP
-      if (cell.gap !== window.CUSTOM_BRIDGE && symCell?.gap !== window.CUSTOM_BRIDGE_FLIPPED) solveLoop(x, y - 1, numEndpoints, newEarlyExitData, depth + 1)
-
-      path[path.length-1] = PATH_BOTTOM
-      if (cell.gap !== window.CUSTOM_BRIDGE_FLIPPED && symCell?.gap !== window.CUSTOM_BRIDGE) solveLoop(x, y + 1, numEndpoints, newEarlyExitData, depth + 1)
-    }
-
-    path.pop()
-    tailRecurse(x, y)
-
-  } else {
-    // Push a dummy element on the end of the path, so that we can fill it correctly as we DFS.
-    // This element is popped when we tail recurse (which always happens *after* all of our DFS!)
-    path.push(PATH_NONE)
-
-    // Recursion order (LRUD) is optimized for BL->TR and mid-start puzzles
-    var newTasks = []
-    if (y%2 === 0) {
-      newTasks.push(function() {
-        path[path.length-1] = PATH_LEFT
-        return solveLoop(x - 1, y, numEndpoints, newEarlyExitData, depth + 1)
-      })
-      newTasks.push(function() {
-        path[path.length-1] = PATH_RIGHT
-        return solveLoop(x + 1, y, numEndpoints, newEarlyExitData, depth + 1)
-      })
-    }
-
-    if (x%2 === 0) {
-      newTasks.push(function() {
-        path[path.length-1] = PATH_TOP
-        return solveLoop(x, y - 1, numEndpoints, newEarlyExitData, depth + 1)
-      })
-      newTasks.push(function() {
-        path[path.length-1] = PATH_BOTTOM
-        return solveLoop(x, y + 1, numEndpoints, newEarlyExitData, depth + 1)
-      })
-    }
-
-    newTasks.push(function() {
-      path.pop()
-      tailRecurse(x, y)
-    })
-
-    return newTasks
+  // Recursion order (LRUD) is optimized for BL->TR and mid-start puzzles
+  if (y%2 === 0) {
+    path[path.length-1] = PATH_LEFT
+    if (cell.gap !== window.CUSTOM_BRIDGE && symCell?.gap !== window.CUSTOM_BRIDGE_FLIPPED) solveLoop(x - 1, y, numEndpoints, depth + 1)
+    
+    path[path.length-1] = PATH_RIGHT
+    if (cell.gap !== window.CUSTOM_BRIDGE_FLIPPED && symCell?.gap !== window.CUSTOM_BRIDGE) solveLoop(x + 1, y, numEndpoints, depth + 1)
   }
+
+  if (x%2 === 0) {
+    path[path.length-1] = PATH_TOP
+    if (cell.gap !== window.CUSTOM_BRIDGE && symCell?.gap !== window.CUSTOM_BRIDGE_FLIPPED) solveLoop(x, y - 1, numEndpoints, depth + 1)
+
+    path[path.length-1] = PATH_BOTTOM
+    if (cell.gap !== window.CUSTOM_BRIDGE_FLIPPED && symCell?.gap !== window.CUSTOM_BRIDGE) solveLoop(x, y + 1, numEndpoints, depth + 1)
+  }
+
+  path.pop()
+  tailRecurse(x, y)
 }
 
 window.cancelSolving = function() {

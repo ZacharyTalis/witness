@@ -470,6 +470,7 @@ namespace(function () {
 
   let symbolData = {
     'start': { 'type': 'start', 'opposite': false, 'title': 'Start point' },
+    'startB': { 'type': 'start', 'opposite': true, 'title': 'Alith\'s Anti Start point' },
     'end': { 'type': 'end', 'endType': 0, 'y': 18, 'dir': 'top', 'title': 'End point' },
     'endB': { 'type': 'end', 'endType': 1, 'y': 18, 'dir': 'top', 'title': 'End point' },
     'endC': { 'type': 'end', 'endType': 2, 'y': 18, 'dir': 'top', 'title': 'End point' },
@@ -590,25 +591,6 @@ namespace(function () {
         case 'xvmino':
           button.params.polyshape = activeParams.polyshape
           button.onpointerdown = function (event) { buttonBehaviour(event, this, (el) => { shapeChooser(); }) }
-          break;
-        case 'start':
-          button.onpointerdown = function (event) {
-            buttonBehaviour(event, this, (el) => {
-              symbolData[activeParams.id].opposite = !symbolData[activeParams.id].opposite
-              activeParams.opposite = symbolData[activeParams.id].opposite
-            })
-          }
-          break;
-        case 'end':
-          button.onpointerdown = function (event) {
-            buttonBehaviour(event, this, (el) => {
-              let endType = symbolData[activeParams.id].endType
-              if (endType == undefined) endType = 0
-              endType = (endType + (event.isRightClick() ? 2 : 1)) % 3;
-              symbolData[activeParams.id].endType = endType
-              activeParams.endType = endType
-            })
-          }
           break;
         case 'divdiamond':
         case 'dice':

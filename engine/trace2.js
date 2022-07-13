@@ -397,12 +397,6 @@ window.trace = function(event, puzzle, pos, start, symStart=null) {
         puzzle.path.push(0)
         window.validate(puzzle, false) // We want all invalid elements so we can show the user.
 
-        for (var negation of puzzle.negations) {
-          console.debug('Rendering negation', negation)
-          data.animations.insertRule('.' + data.svg.id + '_' + negation.source.x + '_' + negation.source.y + ' {animation: 0.75s 1 forwards fade}\n')
-          data.animations.insertRule('.' + data.svg.id + '_' + negation.target.x + '_' + negation.target.y + ' {animation: 0.75s 1 forwards fade}\n')
-        }
-
         if (puzzle.valid) {
           window.PLAY_SOUND('success')
           window.onSolvedPuzzle(data.path)
@@ -418,14 +412,45 @@ window.trace = function(event, puzzle, pos, start, symStart=null) {
           // Get list of invalid elements
           if (!puzzle.disableFlash) {
             for (var invalidElement of puzzle.invalidElements) {
-              if (!puzzle.getCell(invalidElement.x, invalidElement.y).gap) data.animations.insertRule('.' + data.svg.id + '_' + invalidElement.x + '_' + invalidElement.y + ' {animation: 0.4s 20 alternate-reverse error}\n')
+              if (!puzzle.getCell(invalidElement.x, invalidElement.y).gap) {
+                data.animations.insertRule('.' + data.svg.id + '_' + invalidElement.x + '_' + invalidElement.y + ' {animation: 0.4s 20 alternate-reverse error}\n')
+                data.animations.insertRule('.' + data.svg.id + '_' + invalidElement.x + '_' + invalidElement.y + '_copier {animation: 0.4s 20 alternate-reverse error}\n')
+              }
             }
             if (puzzle.failmandering) data.animations.insertRule('#jerrymandering {animation: 0.2s 10 alternate-reverse error}\n')
           }
         }
         if (puzzle.statuscoloring) {
-          if (puzzle.statusRight?.length) for (var e of puzzle.statusRight) data.animations.insertRule('.' + data.svg.id + '_' + e.x + '_' + e.y + ' {fill: #99ff99}\n')
-          if (puzzle.statusWrong?.length) for (var e of puzzle.statusWrong) data.animations.insertRule('.' + data.svg.id + '_' + e.x + '_' + e.y + ' {fill: #ff9999}\n')
+          if (puzzle.statusRight?.length) for (var e of puzzle.statusRight) {
+            data.animations.insertRule('.' + data.svg.id + '_' + e.x + '_' + e.y + ' {fill: #99ff99}\n')
+            data.animations.insertRule('.' + data.svg.id + '_' + e.x + '_' + e.y + '_copier {fill: #99ff99}\n')
+          }
+          if (puzzle.statusWrong?.length) for (var e of puzzle.statusWrong) {
+            data.animations.insertRule('.' + data.svg.id + '_' + e.x + '_' + e.y + ' {fill: #ff9999}\n')
+            data.animations.insertRule('.' + data.svg.id + '_' + e.x + '_' + e.y + '_copier {fill: #ff9999}\n')
+          }
+        }
+        if (puzzle.negatorResults) for (let r of [...Object.keys(puzzle.negatorResults), ...Object.values(puzzle.negatorResults)]) {
+          r = Number(r);
+          let [x, y] = [r % puzzle.width, div(r, puzzle.width)];
+          data.animations.insertRule('.' + data.svg.id + '_' + x + '_' + y + (puzzle.getCell(x, y).type === 'copier' ? '_copier' : '') + ' {opacity: 0.25}\n')
+        }
+        if (puzzle.copierResults) for (let r in puzzle.copierResults) {
+          r = Number(r);
+          let x = r % puzzle.width;
+          let y = div(r, puzzle.width);
+          let q = {
+            'width':58,
+            'height':58,
+            'x': x*41 + 23,
+            'y': y*41 + 23,
+            'class': 'puzzle_' + x + '_' + y + '_copier'
+          };
+          Object.assign(q, puzzle.getCell(puzzle.copierResults[r] % puzzle.width, div(puzzle.copierResults[r], puzzle.width)));
+          q.color = puzzle.getCell(x, y).color;
+          data.animations.insertRule('.' + data.svg.id + '_' + x + '_' + y + ' {opacity: 0}\n')
+          window.drawSymbolWithSvg(data.svg, q);
+          for (let el of Array.from(document.getElementsByClassName(data.svg.id + '_' + x + '_' + y + '_copier'))) el.classList.add('copierResult');
         }
       }, 1)
 
@@ -453,6 +478,7 @@ window.clearAnimations = function() {
       data.animations.deleteRule(i--)
     }
   }
+  for (let el of Array.from(document.getElementsByClassName('copierResult'))) el.parentElement.removeChild(el);
 }
 
 window.onTraceStart = function(puzzle, pos, svg, start, symStart=null) {

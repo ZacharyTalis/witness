@@ -319,7 +319,6 @@ function placeYlops(ylops, i, polys, puzzle, uniqueXV) {
 // Solves via recursive backtracking: Some piece must fill the top left square,
 // so try every piece to fill it, then recurse.
 function placePolys(polys, puzzle, uniqueXV) {
-  console.warn(uniqueXV);
   // Check for overlapping polyominos, and handle exit cases for all polyominos placed.
   let allPolysPlaced = (polys.length === 0)
   for (let y=1; y<puzzle.height; y+=2) {

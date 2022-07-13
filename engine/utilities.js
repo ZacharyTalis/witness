@@ -1051,8 +1051,8 @@ namespace(function () {
     let ret = { 'type': 'line', 'line': 0 };
     if (dot) {
       if (altStart >= 2) {
-        ret.endType = (start >> 6);
-        ret.dot = (dot & 0x3F) - 29;
+        ret.endType = (dot >> 6);
+        if (dot & 0x3F) ret.dot = (dot & 0x3F) - 29;
       }
       else ret.dot = dot - 29;
     }
@@ -1276,7 +1276,8 @@ namespace(function () {
   }
 
   window.exportSequence = function (rawList, useIDN = false) {
-    let list = [...rawList];
+    let list = [...rawList].filter(x => x.length);
+    if (!list.length) return '';
     let veri = list[0].indexOf('_');
     let version = list[0].slice(0, veri);
     list = list.map(x => serializePuzzle(deserializePuzzleV9(deserializePuzzlePre(x.slice(veri + 1))), true));
@@ -1345,6 +1346,7 @@ namespace(function () {
   }
 
   window.importSequence = function (string) {
+    if (!string.length) return [''];
     let veri = string.indexOf('_');
     let version = string.slice(0, veri);
     string = string.slice(veri + 1);

@@ -334,12 +334,8 @@ window.drawPath = function(puzzle, path, target='puzzle') {
       } else if (cell.end === 'bottom') {
         window.onMove(0, 24)
       }
-<<<<<<< HEAD
-      break;
-=======
       if (i != path.length-1) throw Error('Path contains ' + (path.length - 1 - i) + ' trailing directions')
       break
->>>>>>> upstream/master
     } else if (path[i] === PATH_LEFT) {
       dx = -1
       cell.dir = 'left'
