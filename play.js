@@ -65,6 +65,9 @@ namespace(function () {
   window.isLastPanel = function(type = 0) {
     return puzzles.length <= endDest(type);
   }
+  window.isMultiplePanels = function() {
+    return puzzles.length > 1;
+  }
 
   window.reloadSymbolTheme = function () {
     draw(window.puzzle)

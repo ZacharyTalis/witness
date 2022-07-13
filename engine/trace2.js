@@ -411,7 +411,7 @@ window.trace = function(event, puzzle, pos, start, symStart=null) {
           let type = puzzle.getCell(puzzle.endPoint.x, puzzle.endPoint.y).endType;
           if (type === 1) window.PLAY_SOUND('endB')
           else if (type === 2) window.PLAY_SOUND('endC')
-          if (isLastPanel(type)) window.PLAY_SOUND('beam')
+          if (isMultiplePanels() && isLastPanel(type)) window.PLAY_SOUND('beam')
           window.onSolvedPuzzle(data.path)
           // !important to override the child animation
           data.animations.insertRule('.' + data.svg.id + ' {animation: 1s 1 forwards line-success !important}\n')
@@ -530,7 +530,7 @@ window.onTraceStart = function(puzzle, pos, svg, start, symStart=null) {
   data.svg = svg
   svg.onclick = function() {
     document.getElementById('puzzle').onpointerdown = function() { 
-      if (!data.start) window.PLAY_SOUND('click') 
+      if (!data.start && !document.getElementById('metaButtons')) window.PLAY_SOUND('click') 
     }
   }
   data.cursor = cursor

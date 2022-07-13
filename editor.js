@@ -380,6 +380,9 @@ namespace(function () {
   window.isLastPanel = function(type = 0) {
     return false;
   }
+  window.isMultiplePanels = function() {
+    return false;
+  }
 
   let puzzleStyleExpand = true;
   let puzzleStyleBusy = false;
