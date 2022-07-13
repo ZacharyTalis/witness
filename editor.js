@@ -377,6 +377,10 @@ namespace(function () {
     writePuzzle();
   }
 
+  window.isLastPanel = function(type = 0) {
+    return false;
+  }
+
   let puzzleStyleExpand = true;
   let puzzleStyleBusy = false;
   window.togglePuzzleStyle = function () {

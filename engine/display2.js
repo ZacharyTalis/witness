@@ -444,6 +444,7 @@ function drawStartAndEnd(puzzle, svg) {
         ;(function(puzzle, x, y, start, symStart) {
           start.onpointerdown = function(event) {
             window.trace(event, puzzle, {'x':x, 'y':y}, start, symStart)
+            event.stopPropagation();
           }
         }(puzzle, x, y, start, symStart))
       }

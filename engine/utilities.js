@@ -31,15 +31,35 @@ namespace(function () {
   }
 
   var tracks = {
-    'start': './data/panel_start_tracing.aac',
-    'success': './data/panel_success.aac',
-    'fail': './data/panel_failure.aac',
-    'abort': './data/panel_abort_tracing.aac',
+    'start': './data/panel_start_tracing.ogg',
+    'success': './data/panel_success.ogg',
+    'fail': './data/panel_failure.ogg',
+    'abort': './data/panel_abort_tracing.ogg',
+    'startCRT': './data/crt_panel_start_tracing.ogg',
+    'successCRT': './data/crt_panel_success.ogg',
+    'failCRT': './data/crt_panel_failure.ogg',
+    'abortCRT': './data/crt_panel_abort_tracing.ogg',
+    'startPillar': './data/endpillars_panel_start_tracing.ogg',
+    'successPillar': './data/endpillars_panel_success.ogg',
+    'failPillar': './data/endpillars_panel_failure.ogg',
+    'abortPillar': './data/endpillars_panel_abort_tracing.ogg',
+    'startFloor': './data/floor_panel_start_tracing.ogg',
+    'successFloor': './data/floor_panel_success.ogg',
+    'failFloor': './data/floor_panel_failure.ogg',
+    'abortFloor': './data/floor_panel_abort_tracing.ogg',
+    'startGlass': './data/glass_panel_start_tracing.ogg',
+    'successGlass': './data/glass_panel_success.ogg',
+    'failGlass': './data/glass_panel_failure.ogg',
+    'abortGlass': './data/glass_panel_abort_tracing.ogg',
+    'endB': './data/bridge_panel_fold_even.ogg',
+    'endC': './data/bridge_panel_fold_odd.ogg',
+    'beam': './data/laser_fire.ogg',
+    'click': './data/pointless_click.ogg',
+    'negator': './data/eraser_apply.ogg',
   }
-  var audio = new Audio(src = './data/panel_start_tracing.aac')
 
   window.PLAY_SOUND = function (name) {
-    audio.pause()
+    var audio = new Audio(src = './data/panel_start_tracing.ogg')
     audio.src = tracks[name]
     audio.volume = localStorage.volume
     audio.play()

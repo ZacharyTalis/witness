@@ -225,8 +225,8 @@ function validatePuzzleForStatusColoring(puzzle, quick) {
             puzzle.statusRight.push({'x': x, 'y': y});
         }
         let puzzle2 = clonePuzzle(puzzle); 
-        for (let q of puzzle.statusRight) puzzle2.getCell(q.x, q.y).color = 0;
-        for (let q of puzzle.statusWrong) puzzle2.getCell(q.x, q.y).color = 1;
+        for (let q of puzzle.statusRight) if (puzzle2.grid?.[q.x]?.[q.y]?.color) puzzle2.grid[q.x][q.y].color = 0;
+        for (let q of puzzle.statusWrong) if (puzzle2.grid?.[q.x]?.[q.y]?.color) puzzle2.grid[q.x][q.y].color = 1;
         puzzle.invalidElements = Array.from(validatePuzzleForBridges(puzzle2, false));
     }
     return puzzle.invalidElements;

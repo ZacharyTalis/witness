@@ -369,12 +369,21 @@ function getSymmetricalDir(puzzle, dir) {
   return dir
 }
 
+function getSoundPrefix(puzzle) {
+  let prefix = '';
+  if (puzzle.pillar) prefix = 'Pillar'; 
+  else if (puzzle.jerrymandering || puzzle.statuscoloring) prefix = 'Floor';
+  else if (puzzle.optional) prefix = 'CRT';
+  else if (puzzle.symmetry) prefix = 'Glass';
+  return prefix;
+}
+
 window.trace = function(event, puzzle, pos, start, symStart=null) {
   /*if (data.start == null) {*/
   if (data.tracing !== true) { // could be undefined or false
     var svg = start.parentElement
     data.tracing = true
-    window.PLAY_SOUND('start')
+    window.PLAY_SOUND('start' + getSoundPrefix(puzzle));
     // Cleans drawn lines & puzzle state
     clearGrid(svg, puzzle)
     onTraceStart(puzzle, pos, svg, start, symStart)
@@ -398,13 +407,17 @@ window.trace = function(event, puzzle, pos, start, symStart=null) {
         window.validate(puzzle, false) // We want all invalid elements so we can show the user.
 
         if (puzzle.valid) {
-          window.PLAY_SOUND('success')
+          window.PLAY_SOUND('success' + getSoundPrefix(puzzle));
+          let type = puzzle.getCell(puzzle.endPoint.x, puzzle.endPoint.y).endType;
+          if (type === 1) window.PLAY_SOUND('endB')
+          else if (type === 2) window.PLAY_SOUND('endC')
+          if (isLastPanel(type)) window.PLAY_SOUND('beam')
           window.onSolvedPuzzle(data.path)
           // !important to override the child animation
           data.animations.insertRule('.' + data.svg.id + ' {animation: 1s 1 forwards line-success !important}\n')
           if (window.TRACE_COMPLETION_FUNC) window.TRACE_COMPLETION_FUNC(puzzle, puzzle.path)
         } else {
-          window.PLAY_SOUND('fail')
+          window.PLAY_SOUND('fail' + getSoundPrefix(puzzle));
           document.getElementsByClassName('cursor')[0].style.opacity = 0;
           if (puzzle.image['cursor-image']) document.getElementsByClassName('cursor-image')[0].style.opacity = 0;
           for (let o of Array.from(document.getElementsByClassName('veil-image'))) o.style.opacity = 1;
@@ -430,12 +443,13 @@ window.trace = function(event, puzzle, pos, start, symStart=null) {
             data.animations.insertRule('.' + data.svg.id + '_' + e.x + '_' + e.y + '_copier {fill: #ff9999}\n')
           }
         }
-        if (puzzle.negatorResults) for (let r of [...Object.keys(puzzle.negatorResults), ...Object.values(puzzle.negatorResults)]) {
+        if (Object.keys(puzzle.negatorResults).length || Object.keys(puzzle.copierResults).length) window.PLAY_SOUND('negator');
+        for (let r of [...Object.keys(puzzle.negatorResults), ...Object.values(puzzle.negatorResults)]) {
           r = Number(r);
           let [x, y] = [r % puzzle.width, div(r, puzzle.width)];
           data.animations.insertRule('.' + data.svg.id + '_' + x + '_' + y + (puzzle.getCell(x, y).type === 'copier' ? '_copier' : '') + ' {opacity: 0.25}\n')
         }
-        if (puzzle.copierResults) for (let r in puzzle.copierResults) {
+        for (let r in puzzle.copierResults) {
           r = Number(r);
           let x = r % puzzle.width;
           let y = div(r, puzzle.width);
@@ -456,7 +470,7 @@ window.trace = function(event, puzzle, pos, start, symStart=null) {
 
     // Right-clicked (or double-tapped) and not at the end: Clear puzzle
     } else if (event.isRightClick()) {
-      window.PLAY_SOUND('abort')
+      window.PLAY_SOUND('abort' + getSoundPrefix(puzzle));
       clearGrid(data.svg, puzzle)
     } else { // Exit lock but allow resuming from the cursor (Desktop only)
       data.cursor.onpointerdown = function(event) {
@@ -514,6 +528,11 @@ window.onTraceStart = function(puzzle, pos, svg, start, symStart=null) {
   for (let o of Array.from(document.getElementsByClassName('veil-image'))) o.style.opacity = 0;
 
   data.svg = svg
+  svg.onclick = function() {
+    document.getElementById('puzzle').onpointerdown = function() { 
+      if (!data.start) window.PLAY_SOUND('click') 
+    }
+  }
   data.cursor = cursor
   data.x = x
   data.y = y

@@ -31,8 +31,9 @@ namespace(function () {
       if (!localStorage[code]?.length) localStorage[code] = '\0';
       currentPanel = Math.min(localStorage[code].length, puzzles.length) - 1;
       reloadPanel();
-    } else window.location.replace(window.NAME + '/');
+    } else window.location.replace(window.NAME + '/');    
   }
+
 
   window.checkProgress = function (hash) {
     let progress = localStorage.getItem(hash);
@@ -61,7 +62,7 @@ namespace(function () {
     return currentPanel === (localStorage[code].length - 1);
   }
 
-  function isLastPanel(type = 0) {
+  window.isLastPanel = function(type = 0) {
     return puzzles.length <= endDest(type);
   }
 
