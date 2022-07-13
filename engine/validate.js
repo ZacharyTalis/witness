@@ -120,35 +120,13 @@ window.validate = function(puzzle, quick) {
     if (puzzle.grid[puzzle.startPoint.x][puzzle.startPoint.y].start === 2
         || puzzle.statuscoloring
         || global.shapes.includes('nega')) quick = false;
-    let res = validatePuzzleForStatusColoring(puzzle, global, global.thingsToCopy, quick);
+    let res = validatePuzzleForBridges(puzzle, global, global.thingsToCopy, quick);
     puzzle.invalidElements = res.invalid;
     puzzle.copierResults = res.copier;
     puzzle.negatorResults = res.negator;
     puzzle.grid = window.savedGrid;
     delete window.savedGrid;
     puzzle.valid = !puzzle.invalidElements.length;
-}
-
-function validatePuzzleForStatusColoring(puzzle, global, copy, quick) {
-    let puzzle3 = clonePuzzle(puzzle)
-    let global3;
-    let ccopy = {};
-    for (let k in copy) ccopy[k] = {...copy[k]};
-    [puzzle3, global3] = init(puzzle3);
-    let res = validatePuzzleForBridges(puzzle3, global3, ccopy, quick);
-    if (puzzle.statuscoloring) {
-        puzzle.statusRight = [];
-        puzzle.statusWrong = res.invalid.filter(q => puzzle.grid?.[q.x]?.[q.y]?.color !== undefined);
-        for (let x = 0; x < puzzle.width; x++) for (let y = 0; y < puzzle.height; y++) {
-            if (isNaN(puzzle.getCell(x, y)?.color)) continue;
-            if (puzzle.statusWrong.findIndex(q => q.x === x && q.y === y) !== -1) continue;
-            if (puzzle.grid?.[x]?.[y]?.color !== undefined) puzzle.statusRight.push({'x': x, 'y': y});
-        }
-        for (let q of puzzle.statusRight) puzzle.grid[q.x][q.y].color = 0;
-        for (let q of puzzle.statusWrong) puzzle.grid[q.x][q.y].color = 1;
-        return validatePuzzleForBridges(puzzle, global, copy, quick);
-    }
-    return res;
 }
 
 function validatePuzzleForBridges(puzzle, global, copy, quick) {
@@ -162,7 +140,9 @@ function validatePuzzleForBridges(puzzle, global, copy, quick) {
     [puzzle3, global3] = init(puzzle3);
     let ccopy = {};
     for (let k in copy) ccopy[k] = {...copy[k]};
-    res = validatePuzzleForCopiers(puzzle3, global3, ccopy, quick);
+    res = validatePuzzleForStatusColoring(puzzle3, global3, ccopy, quick);
+    puzzle.statusRight = puzzle3.statusRight;
+    puzzle.statusWrong = puzzle3.statusWrong;
     if (global.bridgeBranches?.length) for (let br of global.bridgeBranches) {
         let global2;
         if (quick && inv.length) return;
@@ -185,9 +165,31 @@ function validatePuzzleForBridges(puzzle, global, copy, quick) {
         [puzzle2, global2] = init(puzzle2);
         let ccopy = {};
         for (let k in copy) ccopy[k] = {...copy[k]};
-        res.invalid.push(...validatePuzzleForCopiers(puzzle2, global2, ccopy, quick).invalid);
+        res.invalid.push(...validatePuzzleForStatusColoring(puzzle2, global2, ccopy, quick).invalid);
     }
     res.invalid = Array.from(new Set(res.invalid.map(x => ret(x.x, x.y)))).map(x => {return {'x': xy(x)[0], 'y': xy(x)[1]}});
+    return res;
+}
+
+function validatePuzzleForStatusColoring(puzzle, global, copy, quick) {
+    let puzzle3 = clonePuzzle(puzzle)
+    let global3;
+    let ccopy = {};
+    for (let k in copy) ccopy[k] = {...copy[k]};
+    [puzzle3, global3] = init(puzzle3);
+    let res = validatePuzzleForCopiers(puzzle3, global3, ccopy, quick);
+    if (puzzle.statuscoloring) {
+        puzzle.statusRight = [];
+        puzzle.statusWrong = res.invalid.filter(q => puzzle.grid?.[q.x]?.[q.y]?.color !== undefined);
+        for (let x = 0; x < puzzle.width; x++) for (let y = 0; y < puzzle.height; y++) {
+            if (isNaN(puzzle.getCell(x, y)?.color)) continue;
+            if (puzzle.statusWrong.findIndex(q => q.x === x && q.y === y) !== -1) continue;
+            if (puzzle.grid?.[x]?.[y]?.color !== undefined) puzzle.statusRight.push({'x': x, 'y': y});
+        }
+        for (let q of puzzle.statusRight) puzzle.grid[q.x][q.y].color = 0;
+        for (let q of puzzle.statusWrong) puzzle.grid[q.x][q.y].color = 1;
+        return validatePuzzleForCopiers(puzzle, global, copy, quick);
+    }
     return res;
 }
 
