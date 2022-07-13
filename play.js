@@ -105,8 +105,8 @@ namespace(function () {
     window.clearAnimations();
     applyTheme(puzzle);
     applyImage(puzzle);
-    if (localStorage[`${code}_${currentPanel}`])
-      window.setPath(window.puzzle, localStorage[`${code}_${currentPanel}`]);
+    if (localStorage[`${code}_${panelNo}`])
+      window.setPath(window.puzzle, localStorage[`${code}_${panelNo}`]);
     updateArrows();
   }
 
@@ -125,7 +125,7 @@ namespace(function () {
       ends.add((puzzle.getCell(puzzle.endPoint.x, puzzle.endPoint.y).endType) ?? 0)
       if (((sols?.size ?? 1) >= puzzle.sols) && (!perfectActivated || !solsPerfect.length)) for (let o of Array.from(ends)) levelUp(o);
     } else levelUp(puzzle.getCell(puzzle.endPoint.x, puzzle.endPoint.y).endType ?? 0);
-    localStorage[`${code}_${currentPanel}`] = dir;
+    localStorage[`${code}_${panelNo}`] = dir;
   }
 
   function levelUp(type = -1) {
