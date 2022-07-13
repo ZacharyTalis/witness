@@ -164,6 +164,20 @@ function drawGrid(puzzle, svg, target) {
         drawSymbolWithSvg(svg, params)
         continue;
       }
+      if (cell?.gap >= window.CUSTOM_BRIDGE) {
+        var params = {
+          'width':58,
+          'height':58,
+          'x': x*41 + 23,
+          'y': y*41 + 23,
+          'class': target + '_' + x + '_' + y,
+          'type': 'bridgeButActually',
+          'flip': (cell?.gap - window.CUSTOM_BRIDGE) + (0.5 * (y % 2)),
+          'color': 'var(--line-default)'
+        }
+        drawSymbolWithSvg(svg, params)
+        continue;
+      }
 
       var line = createElement('line')
       line.setAttribute('stroke-width', 24)

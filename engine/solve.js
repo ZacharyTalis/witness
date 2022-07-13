@@ -47,13 +47,13 @@ function countNodes(x, y, depth) {
     nodes++
 
     if (y%2 === 0) {
-      countNodes(x - 1, y, depth + 1)
-      countNodes(x + 1, y, depth + 1)
+      if (cell.gap !== window.CUSTOM_BRIDGE && symCell?.gap !== window.CUSTOM_BRIDGE_FLIPPED) countNodes(x - 1, y, depth + 1)
+      if (cell.gap !== window.CUSTOM_BRIDGE_FLIPPED && symCell?.gap !== window.CUSTOM_BRIDGE) countNodes(x + 1, y, depth + 1)
     }
 
     if (x%2 === 0) {
-      countNodes(x, y - 1, depth + 1)
-      countNodes(x, y + 1, depth + 1)
+      if (cell.gap !== window.CUSTOM_BRIDGE && symCell?.gap !== window.CUSTOM_BRIDGE_FLIPPED) countNodes(x, y - 1, depth + 1)
+      if (cell.gap !== window.CUSTOM_BRIDGE_FLIPPED && symCell?.gap !== window.CUSTOM_BRIDGE) countNodes(x, y + 1, depth + 1)
     }
   }
 
@@ -249,18 +249,18 @@ function solveLoop(x, y, numEndpoints, earlyExitData, depth) {
     // Recursion order (LRUD) is optimized for BL->TR and mid-start puzzles
     if (y%2 === 0) {
       path[path.length-1] = PATH_LEFT
-      solveLoop(x - 1, y, numEndpoints, newEarlyExitData, depth + 1)
+      if (cell.gap !== window.CUSTOM_BRIDGE && symCell?.gap !== window.CUSTOM_BRIDGE_FLIPPED) solveLoop(x - 1, y, numEndpoints, newEarlyExitData, depth + 1)
 
       path[path.length-1] = PATH_RIGHT
-      solveLoop(x + 1, y, numEndpoints, newEarlyExitData, depth + 1)
+      if (cell.gap !== window.CUSTOM_BRIDGE_FLIPPED && symCell?.gap !== window.CUSTOM_BRIDGE) solveLoop(x + 1, y, numEndpoints, newEarlyExitData, depth + 1)
     }
 
     if (x%2 === 0) {
       path[path.length-1] = PATH_TOP
-      solveLoop(x, y - 1, numEndpoints, newEarlyExitData, depth + 1)
+      if (cell.gap !== window.CUSTOM_BRIDGE && symCell?.gap !== window.CUSTOM_BRIDGE_FLIPPED) solveLoop(x, y - 1, numEndpoints, newEarlyExitData, depth + 1)
 
       path[path.length-1] = PATH_BOTTOM
-      solveLoop(x, y + 1, numEndpoints, newEarlyExitData, depth + 1)
+      if (cell.gap !== window.CUSTOM_BRIDGE_FLIPPED && symCell?.gap !== window.CUSTOM_BRIDGE) solveLoop(x, y + 1, numEndpoints, newEarlyExitData, depth + 1)
     }
 
     path.pop()

@@ -780,6 +780,11 @@ namespace(function () {
           simpleLine(svg, params, 28, 2, 180).setAttribute('fill', 'var(--line-default)')
         }
         break;
+      case 'bridgeButActually':
+        let br = simplePath(svg, params, 'M-36-12H-8A1 1 0 01-8 12H-36M8-12A1 1 0 018 12H36V-12')
+        br.setAttribute('fill', 'var(--line-undone)')
+        br.setAttribute('transform', `translate(${midx}, ${midy}) rotate(${180 * params.flip})`);
+        break;
       case 'none': break;
       default: //------------------------------------ERROR HANDLING
         console.error('Cannot draw unknown SVG type: ' + params.type)

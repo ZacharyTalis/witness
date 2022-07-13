@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta property="og:site_name" content="Looksy">
-  <title>Looksy Editor v2.3.4</title>
-  <meta property="og:title" content="Looksy Editor v2.3.4">
+  <title>Looksy Editor v2.99.0</title>
+  <meta property="og:title" content="Looksy Editor v2.99.0">
   <meta name="description" content="Looksy - Modded Witness Editor">
   <meta property="og:description" content="Modded Witness Editor">
   <meta property="og:type" content="Game">
@@ -201,6 +201,11 @@
                   <label onpointerdown="applyChange('makeJerrymandering', null, 'jerrymandering')" style="margin-right: 8px"><a title="It's like Gerrymandering, but for Witness">Jerrymandering</a></label>
                   <div class="spacer"></div>
                 </div>
+                <div class="hlist">
+                  <div onpointerdown="applyChange('makeStatuscoloring', null, 'statuscoloring')" class="checkbox" id="makeStatuscoloring"></div>
+                  <label onpointerdown="applyChange('makeStatuscoloring', null, 'statuscoloring')" style="margin-right: 8px"><a title="Just Kirb's Status Coloring">Status Coloring</a></label>
+                  <div class="spacer"></div>
+                </div>
               </div>
               <div id="hide-if-sound-dots" class="block sound-dots-wrapper vlist">
                 <h2>Sound Dots (Drag)</h2>
@@ -224,16 +229,9 @@
                   <td><button id="end"></button></td>
                   <td><button id="gap"></button></td>
                   <td><button id="line"></button></td>
-                  <td><button id="none"></button></td>
-                  <td><button id="none"></button></td>
-                  <td><button id="none"></button></td>
-                  <td><button id="none"></button></td>
-                </tr>
-                <tr>
-                  <td><button id="dot"></button></td>
-                  <td><button id="CrossCurve"></button></td>
-                  <td><button id="dots"></button></td>
-                  <td><button id="eye"></button></td>
+                  <td><button id="endB"></button></td>
+                  <td><button id="endC"></button></td>
+                  <td><button id="bridgeButActually"></button></td>
                   <td id="x-fakebutton">
                     <div id="x-fakewrapper">
                       <div id="x-fakesvg"></div>
@@ -249,17 +247,24 @@
                       </table>
                     </div>
                   </td>
+                </tr>
+                <tr>
+                  <td><button id="dot"></button></td>
+                  <td><button id="cross"></button></td>
+                  <td><button id="curve"></button></td>
+                  <td><button id="dots"></button></td>
+                  <td><button id="soundDot"></button></td>
                   <td><button id="none"></button></td>
                   <td><button id="none"></button></td>
                   <td><button id="none"></button></td>
                 </tr>
                 <tr>
-                  <td><button id="squareToPentagon"></button></td>
+                  <td><button id="square"></button></td>
                   <td><button id="star"></button></td>
                   <td><button id="pokerchip"></button></td>
                   <td><button id="swirl"></button></td>
+                  <td><button id="pentagon"></button></td>
                   <td><button id="null"></button></td>
-                  <td><button id="none"></button></td>
                   <td><button id="none"></button></td>
                   <td><button id="none"></button></td>
                 </tr>
@@ -271,16 +276,16 @@
                   <td><button id="atriangle"></button></td>
                   <td><button id="bell"></button></td>
                   <td><button id="drop"></button></td>
-                  <td><button id="none"></button></td>
+                  <td><button id="eye"></button></td>
                 </tr>
                 <tr>
-                  <td><button id="nega" disabled></button></td>
+                  <td><button id="nega"></button></td>
                   <td><button id="bridge"></button></td>
                   <td><button id="portal"></button></td>
                   <td><button id="divdiamond"></button></td>
-                  <td><button id="copier" disabled></button></td>
-                  <td><button id="whiteAndBlackHole"></button></td>
-                  <td><button id="none"></button></td>
+                  <td><button id="copier"></button></td>
+                  <td><button id="blackhole"></button></td>
+                  <td><button id="whitehole"></button></td>
                   <td><button id="dice"></button></td>
                 </tr>
                 <tr>

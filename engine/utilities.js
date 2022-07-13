@@ -77,6 +77,8 @@ namespace(function () {
   window.GAP_BREAK = 1
   window.GAP_FULL = 2
   window.CUSTOM_LINE = 3
+  window.CUSTOM_BRIDGE = 4
+  window.CUSTOM_BRIDGE_FLIPPED = 5
 
   window.symbols = ['square', 'star', 'pentagon', 'triangle', 'arrow', 'dart', 'atriangle', 'vtriangle', 'blackhole', 'whitehole', 'divdiamond', 'pokerchip', 'bridge', 'scaler', 'sizer', 'twobytwo', 'poly', 'ylop', 'polynt', 'nega', 'copier', 'portal', 'celledhex', 'dice', 'xvmino', 'crystal', '!poly', '!ylop', '!polynt', '!xvmino', 'swirl', 'eye', 'bell', 'drop', 'null'];
   window.polyominoes = ['poly', 'ylop', 'polynt', 'xvmino'];
@@ -132,6 +134,8 @@ namespace(function () {
   l('@keyframes line-success {to {fill: var(--line-success);}}')
   l('@keyframes line-fail {to {fill: var(--line-failure);}}')
   l('@keyframes error {to {fill: red;}}')
+  l('@keyframes status-right {to {fill: #99ff99;}}')
+  l('@keyframes status-wrong {to {fill: #ff9999;}}')
   l('@keyframes fade {to {opacity: 0.35;}}')
   l('@keyframes start-grow { 0% {r: 12;} 100% {r: 24;} }')
   // Neutral button style
@@ -580,7 +584,7 @@ namespace(function () {
   const SCHEMA = new Map([
     ['width', 'byte'],
     ['height', 'byte'],
-    ['flags', 'byte'], //* pillar.x, pillar.y, disableFlash, optional, jerrymandering
+    ['flags', 'byte'], //* pillar.x, pillar.y, disableFlash, optional, jerrymandering, statuscoloring
     ['sols', 'byte'], //* if sols=0, perfect=true
     ['translateX', 'int'], //* in pixel
     ['translateY', 'int'], //* in pixel
@@ -650,7 +654,7 @@ namespace(function () {
     //* header
     raw.size += String.fromCharCode(Math.floor(puzzle.width / 2));
     raw.size += String.fromCharCode(Math.floor(puzzle.height / 2));
-    raw.size += String.fromCharCode(makeBitSwitch(puzzle.disableFlash, puzzle.optional, puzzle.symmetry, puzzle.symmetry?.x, puzzle.symmetry?.y, puzzle.pillar, puzzle.jerrymandering));
+    raw.size += String.fromCharCode(makeBitSwitch(puzzle.disableFlash, puzzle.optional, puzzle.symmetry, puzzle.symmetry?.x, puzzle.symmetry?.y, puzzle.pillar, puzzle.jerrymandering, puzzle.statuscoloring) - 0x100);
     raw.header += String.fromCharCode(Math.min(0xff, puzzle.sols ?? 1));
     for (let k of ['translate', 'rotate', 'scale', 'skew']) {
       raw.header += puzzle.transform[k].map(x => intToByte(x)).join('');
@@ -718,7 +722,7 @@ namespace(function () {
       raw.image.push(puzzle.image[['background-image', 'foreground-image', 'background-music', 'cursor-image', 'veil-image'][i]]);
     }
     if (asObject) return raw;
-    return serializePuzzlePost(raw, 'v8');
+    return serializePuzzlePost(raw, 'v9');
   }
 
   function serializePuzzlePost(raw, version) {
@@ -745,8 +749,8 @@ namespace(function () {
 
   function getCornerData(cell) {
     if (cell == null) return "\0\0";
-    let dot = cell.dot ? cell.dot + 29 : 0;
-    let start = (endEnum.indexOf(cell.end) + 1) + (5 * (cell.start ?? 0)) + ((cell.gap ?? 0) << 4) + ((cell.endType ?? 0) << 6);
+    let dot = (cell.dot ? cell.dot + 29 : 0) + ((cell.endType ?? 0) << 6);
+    let start = (endEnum.indexOf(cell.end) + 1) + (5 * (cell.start ?? 0)) + ((cell.gap ?? 0) << 4);
     return String.fromCharCode(dot, start);
   }
 
@@ -765,6 +769,7 @@ namespace(function () {
     else if (version == 'v6') return deserializePuzzleV6(deserializePuzzlePre(string));
     else if (version == 'v7') return deserializePuzzleV7(deserializePuzzlePre(string));
     else if (version == 'v8') return deserializePuzzleV8(deserializePuzzlePre(string));
+    else if (version == 'v9') return deserializePuzzleV9(deserializePuzzlePre(string));
     else throw Error('unknown puzzle format');
   }
 
@@ -772,16 +777,21 @@ namespace(function () {
     return atob(derunLength(string).replace(/\./g, '+').replace(/\-/g, '/').replace(/\_/g, '='));
   }
 
-  function deserializePuzzleV8(raw) {
+  function deserializePuzzleV9(raw) {
+    return deserializePuzzleV8(raw, true);
+  }
+
+  function deserializePuzzleV8(raw, isV9 = false) {
     let ptr = 0;
     //* header
-    let char = readBitSwitch(raw.charCodeAt(ptr + 2));
+    let char = readBitSwitch(raw.charCodeAt(ptr + 2) + (isV9 * 0x100));
     let puzzle = new Puzzle(raw.charCodeAt(ptr), raw.charCodeAt(ptr + 1), char[5]);
     ptr += 3;
     if (char[0]) puzzle.disableFlash = true;
     if (char[1]) puzzle.optional = true;
     if (char[2]) puzzle.symmetry = { 'x': char[3], 'y': char[4] };
     if (char[6]) puzzle.jerrymandering = true;
+    if (isV9 && char[7]) puzzle.statuscoloring = true;
     puzzle.sols = raw.charCodeAt(ptr);
     ptr++;
     puzzle.transform.translate = [byteToInt(raw.slice(ptr, ptr + 4), true), byteToInt(raw.slice(ptr + 4, ptr + 8), true), byteToInt(raw.slice(ptr + 8, ptr + 12), true)];
@@ -800,7 +810,7 @@ namespace(function () {
       puzzle.theme[entry] = char;
       ptr += 4;
     }
-    [puzzle, ptr] = deserializePuzzleV4Core(raw, ptr, puzzle, true);
+    [puzzle, ptr] = deserializePuzzleV4Core(raw, ptr, puzzle, 1 + isV9);
     //* image
     let urls = raw.slice(ptr).split('\0');
     for (let i = 0; i < ['background-image', 'foreground-image', 'background-music', 'cursor-image', 'veil-image'].length; i++)
@@ -945,7 +955,7 @@ namespace(function () {
     return puzzle;
   }
 
-  function deserializePuzzleV4Core(raw, ptr, puzzle, altStart = false) {
+  function deserializePuzzleV4Core(raw, ptr, puzzle, altStart = 0) {
     //* defaults
     let defCorner = raw.charCodeAt(ptr);
     if (defCorner) for (let i = 0; i < puzzle.width / 2; i++) for (let j = 0; j < puzzle.height / 2; j++) puzzle.grid[i * 2][j * 2] = cornerData(defCorner, 0, altStart);
@@ -1037,9 +1047,15 @@ namespace(function () {
     }
   }
 
-  function cornerData(dot, start, altStart = false) {
+  function cornerData(dot, start, altStart = 0) {
     let ret = { 'type': 'line', 'line': 0 };
-    if (dot) ret.dot = dot - 29;
+    if (dot) {
+      if (altStart >= 2) {
+        ret.endType = (start >> 6);
+        ret.dot = (dot & 0x3F) - 29;
+      }
+      else ret.dot = dot - 29;
+    }
     if (altStart) {
       if ((start & 0xF) % 5) ret.end = endEnum[((start & 0xF) % 5) - 1];
       if (div(start & 0xF, 5)) ret.start = div(start & 0xF, 5);
@@ -1047,8 +1063,9 @@ namespace(function () {
       if (start & 0x7) ret.end = endEnum[(start & 0x7) - 1]
       if ((start & 0xF) >> 3) ret.start = true;
     }
-    if ((start & 0x3F) >> 4) ret.gap = ((start & 0x3F) >> 4);
-    if (start >> 6) ret.endType = (start >> 6);
+    if (altStart >= 2 && (start >> 4)) ret.gap = (start >> 4);
+    else if (altStart < 2 && ((start & 0x3F) >> 4)) ret.gap = ((start & 0x3F) >> 4);
+    if (altStart < 2 && start >> 6) ret.endType = (start >> 6);
     return ret;
   }
 
@@ -1262,7 +1279,7 @@ namespace(function () {
     let list = [...rawList];
     let veri = list[0].indexOf('_');
     let version = list[0].slice(0, veri);
-    list = list.map(x => serializePuzzle(deserializePuzzleV8(deserializePuzzlePre(x.slice(veri + 1))), true));
+    list = list.map(x => serializePuzzle(deserializePuzzleV9(deserializePuzzlePre(x.slice(veri + 1))), true));
     let ret = (useIDN ? 'vs3i_' : 'vs3_') + version + '_';
     let res = String.fromCharCode(list.length);
     /**
@@ -1367,7 +1384,7 @@ namespace(function () {
   }
 
   function importSequenceV3Core(version, string) {
-    if (version !== 'v6' && version !== 'v7' && version !== 'v8') throw Error('Uh oh! tell prod to update the sequence importer');
+    if (version !== 'v6' && version !== 'v7' && version !== 'v8' && version !== 'v9') throw Error('Uh oh! tell prod to update the sequence importer');
     let ptr = 0;
     let puzzles = [];
     for (let i = 0; i < string.charCodeAt(ptr); i++) puzzles.push({});

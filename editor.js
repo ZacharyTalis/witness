@@ -102,7 +102,7 @@ namespace(function () {
     }
   }
 
-  const puzzleCheckbox = ['makePerfect', 'disableFlash', 'makeOptional', 'makeJerrymandering'];
+  const puzzleCheckbox = ['makePerfect', 'disableFlash', 'makeOptional', 'makeJerrymandering', 'makeStatuscoloring'];
 
   function reloadPuzzle() {
     // Disable the Solve (manually) button, clear lines, and redraw the puzzle
@@ -140,6 +140,7 @@ namespace(function () {
     document.getElementById('disableFlash').checked = puzzle.disableFlash;
     document.getElementById('makeOptional').checked = puzzle.optional;
     document.getElementById('makeJerrymandering').checked = puzzle.jerrymandering;
+    document.getElementById('makeStatuscoloring').checked = puzzle.statuscoloring;
     for (let o of puzzleCheckbox.map(x => document.getElementById(x))) o.style.background = o.checked ? 'var(--text)' : 'var(--background)';
     //* sound ui
     let sounds = puzzle.grid.flat().filter(x => x?.dot >= 40).map(x => x.dot - 39).sort((a, b) => a - b);
@@ -317,6 +318,7 @@ namespace(function () {
     newPuzzle.disableFlash = !!document.getElementById('disableFlash').checked;
     newPuzzle.optional = !!document.getElementById('makeOptional').checked;
     newPuzzle.jerrymandering = !!document.getElementById('makeJerrymandering').checked;
+    newPuzzle.statuscoloring = !!document.getElementById('makeStatuscoloring').checked;
     copyTheme(newPuzzle);
     copyImage(newPuzzle);
 
@@ -469,8 +471,11 @@ namespace(function () {
   let symbolData = {
     'start': { 'type': 'start', 'opposite': false, 'title': 'Start point' },
     'end': { 'type': 'end', 'endType': 0, 'y': 18, 'dir': 'top', 'title': 'End point' },
+    'endB': { 'type': 'end', 'endType': 1, 'y': 18, 'dir': 'top', 'title': 'End point' },
+    'endC': { 'type': 'end', 'endType': 2, 'y': 18, 'dir': 'top', 'title': 'End point' },
     'gap': { 'type': 'gap', 'title': 'Line break' },
     'dot': { 'type': 'dot', 'sound': 0, 'title': 'Dot' },
+    'soundDot': { 'type': 'dot', 'sound': 1, 'title': 'Sound Dot' },
     'square': { 'type': 'square', 'title': 'Square' },
     'star': { 'type': 'star', 'title': 'Star' },
     'nega': { 'type': 'nega', 'title': 'Negation' },
@@ -509,12 +514,10 @@ namespace(function () {
     'swirl': { 'type': 'swirl', 'flip': false, 'title': 'Alith\'s Swirls' },
     'eye': { 'type': 'eye', 'count': 1, 'title': 'AnActualCat\'s Eyes' },
     'line': { 'type': 'line', 'title': 'Predrawn Line' },
-    'squareToPentagon': { 'type': 'square', 'title': 'Square' },
-    'whiteAndBlackHole': { 'type': 'blackhole', 'title': 'Pruz\'s Black Holes (Klyzx\'s Revision)' },
-    'CrossCurve': { 'type': 'cross', 'title': 'Cross' },
     'bell': { 'type': 'bell', 'count': 1, 'flip': false, 'title': 'Kube\'s Bells' },
     'drop': { 'type': 'drop', 'count': 1, 'title': 'Mail\'s Drop' },
     'null': { 'type': 'null', 'title': 'Null Symbol' },
+    'bridgeButActually': { 'type': 'bridgeButActually', 'flip': false, 'title': 'Kube\'s Bridges' },
     'none': { 'type': 'none', 'title': 'Symbol Coming Soon!' }
   }
   let xButtons = [];
@@ -678,40 +681,6 @@ namespace(function () {
                   writePuzzle()
                   reloadPuzzle()
                 }
-          }
-          break;
-        case 'dot':
-          button.onpointerdown = function (event) {
-            buttonBehaviour(event, this, (el) => {
-              symbolData[activeParams.id].sound ^= 1
-            });
-          }
-          break;
-        case 'squareToPentagon':
-          button.onpointerdown = function (event) {
-            buttonBehaviour(event, this, (el) => {
-              if (symbolData[activeParams.id].type == 'square') symbolData[activeParams.id] = { ...symbolData['pentagon'] };
-              else symbolData[activeParams.id] = { ...symbolData['square'] };
-              el.params.type = symbolData[activeParams.id].type;
-            });
-          }
-          break;
-        case 'whiteAndBlackHole':
-          button.onpointerdown = function (event) {
-            buttonBehaviour(event, this, (el) => {
-              if (symbolData[activeParams.id].type == 'blackhole') symbolData[activeParams.id] = { ...symbolData['whitehole'] };
-              else symbolData[activeParams.id] = { ...symbolData['blackhole'] };
-              el.params.type = symbolData[activeParams.id].type;
-            });
-          }
-          break;
-        case 'CrossCurve':
-          button.onpointerdown = function (event) {
-            buttonBehaviour(event, this, (el) => {
-              if (symbolData[activeParams.id].type == 'cross') symbolData[activeParams.id] = { ...symbolData['curve'] };
-              else symbolData[activeParams.id] = { ...symbolData['cross'] };
-              el.params.type = symbolData[activeParams.id].type;
-            });
           }
           break;
         default:
@@ -957,7 +926,7 @@ namespace(function () {
         dotColors.push(4)
       }
       puzzle.grid[x][y].dot = getNextValue(dotColors, puzzle.grid[x][y].dot)
-      if (puzzle.grid[x][y].gap !== window.CUSTOM_LINE) puzzle.grid[x][y].gap = undefined
+      if (puzzle.grid[x][y].gap >= window.CUSTOM_LINE) puzzle.grid[x][y].gap = undefined
     } else if (activeParams.type == 'cross' || activeParams.type == 'curve') {
       let offset = 0;
       if (activeParams.type == 'curve') offset = -6;
@@ -970,7 +939,7 @@ namespace(function () {
         dotColors.push(-6 + offset)
       }
       puzzle.grid[x][y].dot = getNextValue(dotColors, puzzle.grid[x][y].dot)
-      if (puzzle.grid[x][y].gap !== window.CUSTOM_LINE) puzzle.grid[x][y].gap = undefined
+      if (puzzle.grid[x][y].gap >= window.CUSTOM_LINE) puzzle.grid[x][y].gap = undefined
     } else if (activeParams.type == 'x') {
       if (x % 2 !== 0 || y % 2 !== 0) return
       let spokes = activeParams.spokes - 1;
@@ -982,7 +951,7 @@ namespace(function () {
       puzzle.grid = savedGrid
       if (puzzle.grid[x][y].dot == -13 - spokes) delete puzzle.grid[x][y].dot
       else puzzle.grid[x][y].dot = -13 - spokes;
-      if (puzzle.grid[x][y].gap !== window.CUSTOM_LINE) puzzle.grid[x][y].gap = undefined
+      if (puzzle.grid[x][y].gap >= window.CUSTOM_LINE) puzzle.grid[x][y].gap = undefined
     } else if (activeParams.type == 'dots') {
       if (x % 2 === 1 && y % 2 === 1) return
       let offset = 4 + (7 * activeParams.count);
@@ -995,11 +964,15 @@ namespace(function () {
       }
       dotColors.push(7 + offset);
       puzzle.grid[x][y].dot = getNextValue(dotColors, puzzle.grid[x][y].dot);
-      if (puzzle.grid[x][y].gap !== window.CUSTOM_LINE) puzzle.grid[x][y].gap = undefined
-    } else if (['gap', 'line'].includes(activeParams.type)) {
+      if (puzzle.grid[x][y].gap >= window.CUSTOM_LINE) puzzle.grid[x][y].gap = undefined
+    } else if (['gap', 'line', 'bridgeButActually'].includes(activeParams.type)) {
       if (x % 2 === y % 2) return
-      puzzle.grid[x][y].gap = getNextValue(activeParams.type == 'gap' ? [undefined, 1, 2] : [undefined, 3], puzzle.grid[x][y].gap)
-      if (activeParams.type == 'line') {
+      puzzle.grid[x][y].gap = getNextValue({
+        'gap': [undefined, 1, 2],
+        'line': [undefined, 3],
+        'bridgeButActually': [undefined, 4, 5]
+      }[activeParams.type], puzzle.grid[x][y].gap)
+      if (activeParams.type !== 'gap') {
         if (update) {
           puzzleModified()
           writePuzzle()

@@ -153,7 +153,16 @@ window.polyFitMaster = function(puzzle, regionNum, global, polys, scalers, downs
     polys       = polys.filter(val => val.type == 'poly' || val.type == 'xvmino');
     let polyCorrect = true; polyntCorrect = true;
     if (polys  .length != 0 || ylops.length != 0) {
-      polyCorrect   = window.polyFit    (puzzle, regionNum, global, polys, ylops);
+      let temp = polys.filter(val => val.type == 'xvmino');
+      let uniqueXV = {};
+      let done = [];
+      for (let poly of temp) {
+        if (uniqueXV[poly.shape]) done.push(poly.shape);
+        else uniqueXV[poly.shape] = poly;
+      }
+      for (let q of done) delete uniqueXV[q];
+      for (let q of polys.filter(val => val.type == 'poly')) delete uniqueXV[q.shape];
+      polyCorrect   = window.polyFit    (puzzle, regionNum, global, polys, ylops, uniqueXV);
     }
     if (polynts.length != 0) {
       polyntCorrect = window.polyntFitnt(puzzle, regionNum, global, polynts); 
@@ -169,7 +178,7 @@ window.polyFitMaster = function(puzzle, regionNum, global, polys, scalers, downs
   return res;
 }
 
-window.polyFit = function(puzzle, regionNum, global, polys, ylops) {
+window.polyFit = function(puzzle, regionNum, global, polys, ylops, uniqueXV) {
   const isPortaled = global.portalRegion && (global.portalRegion.indexOf(regionNum) + 1);
   const data = isPortaled ? global.portalData[isPortaled-1] : null;
   const w = data ? data.width : puzzle.width;
@@ -208,7 +217,7 @@ window.polyFit = function(puzzle, regionNum, global, polys, ylops) {
         puzzle.grid[y][x] = -1;
     }
   } // In the exact match case, we leave every cell marked 0: Polys and ylops need to cancel.
-  res = placeYlops(ylops, 0, polys.slice(), puzzle);
+  res = placeYlops(ylops, 0, polys.slice(), puzzle, uniqueXV);
   if (polyCount === 0) knownCancellations[key] = res;
   puzzle.grid = savedGrid;
   return res;
@@ -275,20 +284,28 @@ function tryPlacePolyshape(cells, y, x, puzzle, sign) {
 
 // Places the ylops such that they are inside of the grid, then checks if the polys
 // zero the region.
-function placeYlops(ylops, i, polys, puzzle) {
+const xBar = 0x1111;
+const yBar = 0x000F;
+function placeYlops(ylops, i, polys, puzzle, uniqueXV) {
   // Base case: No more ylops to place, start placing polys
-  if (i === ylops.length) return placePolys(polys, puzzle)
-
+  if (i === ylops.length) return placePolys(polys, puzzle, uniqueXV)
   let ylop = ylops[i]
   let ylopRotations = getRotations(ylop.polyshape, ylop.rot)
   for (let x=1; x<puzzle.width; x+=2) {
     for (let y=1; y<puzzle.height; y+=2) {
       console.log('Placing ylop', ylop, 'at', x, y)
       for (let polyshape of ylopRotations) {
+        while (!(polyshape & yBar)) polyshape >>= 4;
+        while (!(polyshape & xBar)) polyshape >>= 1;
         let cells = polyominoFromPolyshape(polyshape, true)
         if (!tryPlacePolyshape(cells, y, x, puzzle, -1)) continue;
         console.group('')
-        if (placeYlops(ylops, i+1, polys, puzzle)) return true
+        newXV = {...uniqueXV};
+        if (uniqueXV[ylop.polyshape]) {
+          delete newXV[ylop.polyshape];
+          newXV[polyshape] = {'x': x, 'y': y, 'shape': polyshape};
+        }
+        if (placeYlops(ylops, i+1, polys, puzzle, newXV)) return true
         console.groupEnd('')
         if (!tryPlacePolyshape(cells, y, x, puzzle, +1)) continue;
       }
@@ -301,7 +318,8 @@ function placeYlops(ylops, i, polys, puzzle) {
 // Returns whether or not a set of polyominos fit into a region.
 // Solves via recursive backtracking: Some piece must fill the top left square,
 // so try every piece to fill it, then recurse.
-function placePolys(polys, puzzle) {
+function placePolys(polys, puzzle, uniqueXV) {
+  console.warn(uniqueXV);
   // Check for overlapping polyominos, and handle exit cases for all polyominos placed.
   let allPolysPlaced = (polys.length === 0)
   for (let y=1; y<puzzle.height; y+=2) {
@@ -354,14 +372,17 @@ function placePolys(polys, puzzle) {
       attemptedPolyshapes.push(poly.polyshape)
       polys.splice(i, 1)
       for (let polyshape of getRotations(poly.polyshape, poly.rot)) {
+        while (!(polyshape & yBar)) polyshape >>= 4;
+        while (!(polyshape & xBar)) polyshape >>= 1;
         console.spam('Selected polyshape', polyshape)
         let cells = polyominoFromPolyshape(polyshape)
+        if (Object.values(uniqueXV).find(x => x.x === openCell.x && x.y === openCell.y && x.shape === polyshape)) continue;
         if (!tryPlacePolyshape(cells, openCell.y, openCell.x, puzzle, +1)) {
           console.spam('Polyshape', polyshape, 'does not fit into', openCell.x, openCell.y)
           continue;
         }
         console.group('')
-        if (placePolys(polys, puzzle)) return true
+        if (placePolys(polys, puzzle, uniqueXV)) return true
         console.groupEnd('')
         // Should not fail, as it's an inversion of the above tryPlacePolyshape
         tryPlacePolyshape(cells, openCell.y, openCell.x, puzzle, -1)

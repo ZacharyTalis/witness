@@ -418,10 +418,14 @@ window.trace = function(event, puzzle, pos, start, symStart=null) {
           // Get list of invalid elements
           if (!puzzle.disableFlash) {
             for (var invalidElement of puzzle.invalidElements) {
-              data.animations.insertRule('.' + data.svg.id + '_' + invalidElement.x + '_' + invalidElement.y + ' {animation: 0.4s 20 alternate-reverse error}\n')
+              if (!puzzle.getCell(invalidElement.x, invalidElement.y).gap) data.animations.insertRule('.' + data.svg.id + '_' + invalidElement.x + '_' + invalidElement.y + ' {animation: 0.4s 20 alternate-reverse error}\n')
             }
             if (puzzle.failmandering) data.animations.insertRule('#jerrymandering {animation: 0.2s 10 alternate-reverse error}\n')
           }
+        }
+        if (puzzle.statuscoloring) {
+          if (puzzle.statusRight?.length) for (var e of puzzle.statusRight) data.animations.insertRule('.' + data.svg.id + '_' + e.x + '_' + e.y + ' {fill: #99ff99}\n')
+          if (puzzle.statusWrong?.length) for (var e of puzzle.statusWrong) data.animations.insertRule('.' + data.svg.id + '_' + e.x + '_' + e.y + ' {fill: #ff9999}\n')
         }
       }, 1)
 
@@ -836,6 +840,12 @@ function gapAndSymmetryCollision() {
   if (cell.gap === window.GAP_BREAK) {
     console.spam('Collided with a gap')
     gapSize = 21
+  } else if (
+    (cell.gap === window.CUSTOM_BRIDGE && (lastDir === MOVE_LEFT || lastDir === MOVE_TOP))
+    || (cell.gap === window.CUSTOM_BRIDGE_FLIPPED && (lastDir === MOVE_RIGHT || lastDir === MOVE_BOTTOM))
+  ) {
+    console.spam('Collided with the brige')
+    gapSize = 20;
   } else if (data.puzzle.symmetry != null) {
     if (data.sym.x === data.pos.x && data.sym.y === data.pos.y) {
       console.spam('Collided with our symmetrical line')
@@ -843,6 +853,12 @@ function gapAndSymmetryCollision() {
     } else if (data.puzzle.getCell(data.sym.x, data.sym.y).gap === window.GAP_BREAK) {
       console.spam('Symmetrical line hit a gap')
       gapSize = 21
+    } else if (
+      (data.puzzle.getCell(data.sym.x, data.sym.y).gap === window.CUSTOM_BRIDGE_FLIPPED && (lastDir === MOVE_LEFT || lastDir === MOVE_TOP))
+      || (data.puzzle.getCell(data.sym.x, data.sym.y).gap === window.CUSTOM_BRIDGE && (lastDir === MOVE_RIGHT || lastDir === MOVE_BOTTOM))
+    ) {
+      console.spam('Symmetrical line hit the brige')
+      gapSize = 20;
     }
   }
   if (gapSize === 0) return // Didn't collide with anything

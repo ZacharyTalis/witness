@@ -31,7 +31,7 @@ namespace(function () {
       if (!localStorage[code]?.length) localStorage[code] = '\0';
       currentPanel = Math.min(localStorage[code].length, puzzles.length) - 1;
       reloadPanel();
-    } else window.location.replace('witness.zacharytalis.com/');
+    } else window.location.replace(window.NAME + '/');
   }
 
   window.checkProgress = function (hash) {

@@ -100,7 +100,7 @@ table {
   position: relative;
   width: 52px;
   padding: 0;
-  background-color: var(--outer);
+  background-color: var(--inner);
   border-radius: 0.5vw;
   display: block;
   width: 60px;
@@ -281,6 +281,14 @@ input[type="range"]::-ms-thumb {
 .flashing {
   animation: 1s 1 forwards line-fail !important;
   animation: 0.4s 20 alternate-reverse error;
+}
+
+.status-right {
+  fill: #99ff99 !important;
+}
+
+.status-wrong {
+  fill: #ff9999 !important;
 }
 
 :root {
