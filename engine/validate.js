@@ -196,10 +196,12 @@ function validatePuzzleForStatusColoring(puzzle, global, copy, quick) {
 function validatePuzzleForCopiers(puzzle, global, copy, quick) {
     let c = Number(Object.keys(copy).find(x => copy[x].type === 'copier'));
     if (isNaN(c)) {
-        let inv = validatePuzzle(puzzle, global, false).map(x => ret(x.x, x.y));
+        let global2;
+        [puzzle, global2] = init(puzzle);
+        let inv = validatePuzzle(puzzle, global2, false).map(x => ret(x.x, x.y));
         let newCopy = {};
         for (let q of Object.keys(copy).filter(x => copy[x].type === 'nega' || inv.includes(Number(x)))) newCopy[q] = {...copy[q]};
-        return validatePuzzleForNegators(puzzle, global, newCopy, quick);
+        return validatePuzzleForNegators(puzzle, global2, newCopy, quick);
     }
     delete copy[c];
     let regionNum = global.regionCells.cell.findIndex(x => x.includes(c));

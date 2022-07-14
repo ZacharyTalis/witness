@@ -81,6 +81,7 @@ namespace(function () {
     window.updateList = function () {
         let newList = [];
         for (let o of list) {
+            console.warn('decoding ' + o)
             if (!o.length) {
                 newList.push('');
                 continue;

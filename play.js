@@ -20,6 +20,46 @@ namespace(function () {
   let solsPerfect;
   let open = [false, false, false];
   let ends;
+  const challengeExits = [
+    [[-1]], // ?
+    [ // M ~ Z
+      [ // P ~ S
+        [[108], [109], [107]], // seren
+        [[113], [120], [112]], // sus
+        [[105], [106], [104]], // prod
+      ],
+      [ // T ~ Z
+        [[131], [132], [130]], // Zimodo
+        [[128], [129], [124]], // unsuspiciousperson
+        [[122], [123], [121]], // TheFullestCircle
+      ],
+      [ // M ~ P
+        [[99], [100], [98]], // Mak
+        [[102], [103], [101]], // Prism Ghost
+        [[93], [97], [89]], // Maildropfolder
+      ],
+    ], 
+    [ // @ ~ L
+      [ // C ~ J
+        [[47], [50], [44]], // cheeky
+        [[56], [57], [55]], // Just Kirb
+        [[53], [54], [51]], // CubeObserver
+      ],
+      [ // K ~ L
+        [[78], [79], [77]], // KF
+        [[81], [84], [80]], // Kube
+        [[59], [60], [58]], // Katelyn Delta
+      ],
+      [ // @ ~ A
+        [[29], [30], [28]], // "DAVE"
+        [[42], [43], [34]], // AnActualCat
+        [[32], [33], [31]], // {anonymous}
+      ],
+    ],
+  ];
+  let currentChallenge = [];
+  const challengeEndpoints = [{'x': 8, 'y': 5}, {'x': 5, 'y': 8}, {'x': 5, 'y': 2}];
+  const challengeCode = 899824571
 
   window.onload = function () {
     solsWrapper = document.getElementById('solsWrapper')
@@ -29,28 +69,10 @@ namespace(function () {
     if (toLoad) {
       puzzles = importSequence(decodeURIComponent(toLoad.slice(1))).map(e => window.deserializePuzzle(e));
       if (!localStorage[code]?.length) localStorage[code] = '\0';
-      currentPanel = Math.min(localStorage[code].length, puzzles.length) - 1;
+      currentPanel = localStorage[code].length - 1;
+      if (code === challengeCode && localStorage['currentChallenge']) currentChallenge = localStorage['currentChallenge'].split('').map(x => Number(x));
       reloadPanel();
     } else window.location.replace(window.NAME + '/');    
-  }
-
-
-  window.checkProgress = function (hash) {
-    let progress = localStorage.getItem(hash);
-    if (localStorage.getItem('puzzleProgress_' + hash)) {
-      let temp = '';
-      for (let i = 0; i < Number(localStorage.getItem('puzzleProgress_' + hash)); i++) {
-        localStorage.setItem(hash + '_' + i, localStorage.getItem('puzzleProgress_' + hash + '_' + i))
-        localStorage.removeItem('puzzleProgress_' + hash + '_' + i)
-        temp += String.fromCharCode(i);
-      }
-      localStorage.removeItem('puzzleProgress_' + hash);
-      if (temp?.length) temp = '\0';
-      localStorage.setItem(hash, temp);
-      progress = temp;
-    }
-    if (!progress) return -1;
-    return progress.charCodeAt(progress.length - 1);
   }
 
   function sol(id) {
@@ -106,7 +128,24 @@ namespace(function () {
     window.clearAnimations();
     applyTheme(puzzle);
     applyImage(puzzle);
-    if (localStorage[`${code}_${panelNo}`])
+    if (currentPanel <= 3 && code === challengeCode) { // challenge
+      let _q = challengeExits;
+      for (let q of currentChallenge) _q = _q[q];
+      main: for (let i = 0; i < 3; i++) {
+        for (let exit of _q[i].flat()) if (localStorage[code + '_' + exit] === undefined) continue main;
+        const params = {
+          'type': 'flower',
+          'width': 58,
+          'height': 58,
+          'x': challengeEndpoints[i].x * 41 + 23,
+          'y': challengeEndpoints[i].y * 41 + 23,
+          'class': 'flower_' + i,
+          'color': HSVtoRGB(Math.random(), 0.2, 1)
+        }
+        drawSymbolWithSvg(document.getElementById('puzzle'), params)
+      }
+    }
+    else if (localStorage[`${code}_${panelNo}`])
       window.setPath(window.puzzle, localStorage[`${code}_${panelNo}`]);
     updateArrows();
   }
@@ -133,6 +172,7 @@ namespace(function () {
     if (type === -1) { levelUp(0); levelUp(1); levelUp(2); return; }
     if (isNewPanel() && !isLastPanel(type) && (endDest(type) != panelNo)) {
       localStorage[code] += String.fromCharCode(endDest(type));
+      if (code === challengeCode) localStorage['currentChallenge'] = currentChallenge.join('') + type;
     }
     if (!isLastPanel(type) && (endDest(type) != panelNo)) {
       open[type] = true;
@@ -160,17 +200,25 @@ namespace(function () {
 
   window.getNext = function (type = 0) {
     if (!open[type]) return;
-    if (endDest(type) !== localStorage[code].charCodeAt(currentPanel + 1))
+    if (endDest(type) !== localStorage[code].charCodeAt(currentPanel + 1)) {
       localStorage[code] = localStorage[code].slice(0, currentPanel + 1) + String.fromCharCode(endDest(type));
+      if (code === challengeCode) localStorage['currentChallenge'] = currentChallenge.join('') + type;
+    }
     currentPanel++;
+    if (code === challengeCode) currentChallenge.push(type);
     reloadPanel();
   }
 
   window.getPrev = function () {
     if (currentPanel == 0) return;
     currentPanel--;
+    if (code === challengeCode) currentChallenge.pop();
     reloadPanel();
   }
+
+  window.reloadSymbolTheme = function () {
+    reloadPanel();
+}
 
   // Keyboard navigation between panels
   document.onkeydown = keyNav;
@@ -194,5 +242,26 @@ namespace(function () {
       getNext(2);
     }
   }
+
+  function HSVtoRGB(h, s, v) {
+    var r, g, b, i, f, p, q, t;
+    if (arguments.length === 1) {
+        s = h.s, v = h.v, h = h.h;
+    }
+    i = Math.floor(h * 6);
+    f = h * 6 - i;
+    p = v * (1 - s);
+    q = v * (1 - f * s);
+    t = v * (1 - (1 - f) * s);
+    switch (i % 6) {
+        case 0: r = v, g = t, b = p; break;
+        case 1: r = q, g = v, b = p; break;
+        case 2: r = p, g = v, b = t; break;
+        case 3: r = p, g = q, b = v; break;
+        case 4: r = t, g = p, b = v; break;
+        case 5: r = v, g = p, b = q; break;
+    }
+    return `#${Math.round(r * 255).toString(16).padStart(2, '0')}${Math.round(g * 255).toString(16).padStart(2, '0')}${Math.round(b * 255).toString(16).padStart(2, '0')}${(Math.round(Math.random() * 128) + 127).toString(16).padStart(2, '0')}`;
+}
 
 });

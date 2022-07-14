@@ -742,7 +742,7 @@ namespace(function () {
       raw.image.push(puzzle.image[['background-image', 'foreground-image', 'background-music', 'cursor-image', 'veil-image'][i]]);
     }
     if (asObject) return raw;
-    return serializePuzzlePost(raw, 'v9');
+    return serializePuzzlePost(raw, 'vA');
   }
 
   function serializePuzzlePost(raw, version) {
@@ -769,8 +769,8 @@ namespace(function () {
 
   function getCornerData(cell) {
     if (cell == null) return "\0\0";
-    let dot = (cell.dot ? cell.dot + 29 : 0) + ((cell.endType ?? 0) << 6);
-    let start = (endEnum.indexOf(cell.end) + 1) + (5 * (cell.start ?? 0)) + ((cell.gap ?? 0) << 4);
+    let dot = (cell.dot ? cell.dot + 29 : 0) + (86 * (cell.start ?? 0));
+    let start = (endEnum.indexOf(cell.end) + 1) + ((cell.endType ?? 0) << 3) + ((cell.gap ?? 0) << 5);
     return String.fromCharCode(dot, start);
   }
 
@@ -790,6 +790,7 @@ namespace(function () {
     else if (version == 'v7') return deserializePuzzleV7(deserializePuzzlePre(string));
     else if (version == 'v8') return deserializePuzzleV8(deserializePuzzlePre(string));
     else if (version == 'v9') return deserializePuzzleV9(deserializePuzzlePre(string));
+    else if (version == 'vA') return deserializePuzzleV10(deserializePuzzlePre(string));
     else throw Error('unknown puzzle format');
   }
 
@@ -797,21 +798,25 @@ namespace(function () {
     return atob(derunLength(string).replace(/\./g, '+').replace(/\-/g, '/').replace(/\_/g, '='));
   }
 
-  function deserializePuzzleV9(raw) {
-    return deserializePuzzleV8(raw, true);
+  function deserializePuzzleV10(raw) {
+    return deserializePuzzleV8(raw, 2);
   }
 
-  function deserializePuzzleV8(raw, isV9 = false) {
+  function deserializePuzzleV9(raw) {
+    return deserializePuzzleV8(raw, 1);
+  }
+
+  function deserializePuzzleV8(raw, plusVersion = 0) {
     let ptr = 0;
     //* header
-    let char = readBitSwitch(raw.charCodeAt(ptr + 2) + (isV9 * 0x100));
+    let char = readBitSwitch(raw.charCodeAt(ptr + 2) + ((plusVersion > 0) * 0x100));
     let puzzle = new Puzzle(raw.charCodeAt(ptr), raw.charCodeAt(ptr + 1), char[5]);
     ptr += 3;
     if (char[0]) puzzle.disableFlash = true;
     if (char[1]) puzzle.optional = true;
     if (char[2]) puzzle.symmetry = { 'x': char[3], 'y': char[4] };
     if (char[6]) puzzle.jerrymandering = true;
-    if (isV9 && char[7]) puzzle.statuscoloring = true;
+    if (plusVersion && char[7]) puzzle.statuscoloring = true;
     puzzle.sols = raw.charCodeAt(ptr);
     ptr++;
     puzzle.transform.translate = [byteToInt(raw.slice(ptr, ptr + 4), true), byteToInt(raw.slice(ptr + 4, ptr + 8), true), byteToInt(raw.slice(ptr + 8, ptr + 12), true)];
@@ -830,7 +835,7 @@ namespace(function () {
       puzzle.theme[entry] = char;
       ptr += 4;
     }
-    [puzzle, ptr] = deserializePuzzleV4Core(raw, ptr, puzzle, 1 + isV9);
+    [puzzle, ptr] = deserializePuzzleV4Core(raw, ptr, puzzle, 1 + plusVersion);
     //* image
     let urls = raw.slice(ptr).split('\0');
     for (let i = 0; i < ['background-image', 'foreground-image', 'background-music', 'cursor-image', 'veil-image'].length; i++)
@@ -1068,24 +1073,38 @@ namespace(function () {
   }
 
   function cornerData(dot, start, altStart = 0) {
-    let ret = { 'type': 'line', 'line': 0 };
-    if (dot) {
-      if (altStart >= 2) {
-        ret.endType = (dot >> 6);
-        if (dot & 0x3F) ret.dot = (dot & 0x3F) - 29;
-      }
-      else ret.dot = dot - 29;
+    let ret = { 'type': 'line' };
+    switch (altStart) {
+      case 3:
+        ret.start = div(dot, 86);
+        if (!ret.start) delete ret.start;
+        ret.dot = dot % 86;
+        if (ret.dot !== 0) ret.dot -= 29;
+        else delete ret.dot;
+        if (start & 0x7) ret.end = endEnum[(start & 0x7) - 1];
+        if ((start & 0x1F) >> 3) ret.endType = ((start & 0x1F) >> 3);
+        if (start >> 5) ret.gap = (start >> 5);
+        break;
+      default:
+        if (dot) {
+          if (altStart >= 2) {
+            ret.endType = (dot >> 6);
+            if (dot & 0x3F) ret.dot = (dot & 0x3F) - 29;
+          }
+          else ret.dot = dot - 29;
+        }
+        if (altStart) {
+          if ((start & 0xF) % 5) ret.end = endEnum[((start & 0xF) % 5) - 1];
+          if (div(start & 0xF, 5)) ret.start = div(start & 0xF, 5);
+        } else {
+          if (start & 0x7) ret.end = endEnum[(start & 0x7) - 1]
+          if ((start & 0xF) >> 3) ret.start = true;
+        }
+        if (altStart >= 2 && (start >> 4)) ret.gap = (start >> 4);
+        else if (altStart < 2 && ((start & 0x3F) >> 4)) ret.gap = ((start & 0x3F) >> 4);
+        if (altStart < 2 && start >> 6) ret.endType = (start >> 6);
+        break;
     }
-    if (altStart) {
-      if ((start & 0xF) % 5) ret.end = endEnum[((start & 0xF) % 5) - 1];
-      if (div(start & 0xF, 5)) ret.start = div(start & 0xF, 5);
-    } else {
-      if (start & 0x7) ret.end = endEnum[(start & 0x7) - 1]
-      if ((start & 0xF) >> 3) ret.start = true;
-    }
-    if (altStart >= 2 && (start >> 4)) ret.gap = (start >> 4);
-    else if (altStart < 2 && ((start & 0x3F) >> 4)) ret.gap = ((start & 0x3F) >> 4);
-    if (altStart < 2 && start >> 6) ret.endType = (start >> 6);
     return ret;
   }
 
@@ -1300,7 +1319,7 @@ namespace(function () {
     if (!list.length) return '';
     let veri = list[0].indexOf('_');
     let version = list[0].slice(0, veri);
-    list = list.map(x => serializePuzzle(deserializePuzzleV9(deserializePuzzlePre(x.slice(veri + 1))), true));
+    list = list.map(x => serializePuzzle(deserializePuzzleV10(deserializePuzzlePre(x.slice(veri + 1))), true));
     let ret = (useIDN ? 'vs3i_' : 'vs3_') + version + '_';
     let res = String.fromCharCode(list.length);
     /**
@@ -1406,7 +1425,7 @@ namespace(function () {
   }
 
   function importSequenceV3Core(version, string) {
-    if (version !== 'v6' && version !== 'v7' && version !== 'v8' && version !== 'v9') throw Error('Uh oh! tell prod to update the sequence importer');
+    if (version !== 'v6' && version !== 'v7' && version !== 'v8' && version !== 'v9' && version !== 'vA') throw Error('Uh oh! tell prod to update the sequence importer');
     let ptr = 0;
     let puzzles = [];
     for (let i = 0; i < string.charCodeAt(ptr); i++) puzzles.push({});
