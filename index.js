@@ -47,7 +47,7 @@ namespace(function () {
             '_name': 'tent',
             'hash': 1078793617,
             'puzzles': 30,
-            'endPoint': [10, 10],
+            'endPoint': [12, 10],
             'URL': window.NAME + "/#vs1_v2_AgEQ~8ACP.lAP8ACP.lAP8ABgU~4AGAv8AY4hxAEt3UgBik24A~4-AD1RSQCiuaIA7d7AAIj--wD--yL-~~v2_AgEQ~8ACP.lAP8ACP.lAP8ABgUGCgAABgL-AGOIcQBLd1IAYpNuAP---wA9UUkAormiAO3ewACI--8A--8i-w__~~v2_AwEQ~BAI-6UA-w~4Aj-pQD-AAYF~7AGAv8AY4hxAEt3UgBik24A~4-AD1RSQCiuaIA7d7AAIj--wD--yL-~~v2_AwEQ~BAI-6UA-w~4Aj-pQD-AAYFBQ~6ABgL-AGOIcQBLd1IAYpNuAP---wA9UUkAormiAO3ewACI--8A--8i-w__~~v2_AwEQAAU~8AFAAj-pQD-~4ACP.lAP8ABgU~7AYC-wBjiHEAS3dSAGKTbgD---8APVFJAKK5ogDt3sAAiP--AP--Iv8_~~v2_AwEQ~BAI-6UA-wAABQAI-6UA-wUABgU~7AYC-wBjiHEAS3dSAGKTbgD---8APVFJAKK5ogDt3sAAiP--AP--Iv8_~~v2_AgIQ~8ACP.lAP8~CAI-6UA-w~4AYF~4ABgL-AGOIcQBLd1IAYpNuAP---wA9UUkAormiAO3ewACI--8A--8i-w__~~v2_AwIQ~GACP.lAP8~5ABQ~6ACP.lAP8~7AYF~7AGAv8AY4hxAEt3UgBik24A~4-AD1RSQCiuaIA7d7AAIj--wD--yL-~~v2_AwMQ~BAB~4A-w~4Aj-pQD-~CACP.lAP8AAQAAAP8AAf~4-8~CAB~5-w~4AEAAAD-AAYF~7AGAv8AY4hxAEt3UgBik24A~4-AD1RSQCiuaIA7d7AAIj--wD--yL-~~v2_AwEQ~BAI-6UA-wAI-6UA-wAI-6UA-wAGBQ~6ABgL-AFE9QgBxVlwAqo2VAP---wCWbncA-.XnAOxfawCI--8A--8i-w__~~v2_AgMQ~8ACP.lAP8~CAI-6UA-w~CAj-pQD-~4ABgU~4AGAv8AUT1CAHFWXACqjZUA~4-AJZudwD-5ecA7F9rAIj--wD--yL-~~v2_AgMQ~8ACP.lAP8ACP.lAP8~NAj-pQD-AAj-pQD-AAYF~4ABgL-AFE9QgBxVlwAqo2VAP---wCWbncA-.XnAOxfawCI--8A--8i-w__~~v2_AwMQ~GACP.lAP8~CAI-6UA-w~4Aj-pQD-~CACP.lAP8~4AI-6UA-wAGBQ~6ABgL-AFE9QgBxVlwAqo2VAP---wCWbncA-.XnAOxfawCI--8A--8i-w__~~v2_AwMQ~CABgoAAAj-pQD-~CACP.lAP8~BAYK~6Aj-pQD-~4ACP.lAP8ABgU~7AYC-wBRPUIAcVZcAKqNlQD---8Alm53AP-l5wDsX2sAiP--AP--Iv8_~~v2_AwMQ~BAI-6UA-wAI-6UA-w~HAC-6UA-wAI-6UA-w~HAC-6UA-wAGBQ~6ABgL-AFE9QgBxVlwAqo2VAP---wCWbncA-.XnAOxfawCI--8A--8i-w__~~v3_AQIDE~9Aj-pQD-AAj-pQD-~NAI-6UA-wAI-6UA-wAGBQ~4AYC-wA.PVEAVl5xAEmRqwD---8ARDdYANv3-wAkSrwAiP--AP--Iv8_~~v2_AgMQ~8ACP--gP8ACP--gP8~NAj-pQD-AAj-pQD-AAYF~4ABgL-AD49UQBWXnEASZGrAP---wBEN1gA2-f-ACRKvACI--8A--8i-w__~~v2_AgMQ~8ACP.lAP8ACP--gP8~NAj-pQD-AAj--4D-AAYF~4ABgL-AD49UQBWXnEASZGrAP---wBEN1gA2-f-ACRKvACI--8A--8i-w__~~v2_AwMQ~BAI--.A-w~4Aj-pQD-~FAI-6UA-wAI--.A-w~HAI--.A-wAGBQ~6ABgL-AD49UQBWXnEASZGrAP---wBEN1gA2-f-ACRKvACI--8A--8i-w__~~v2_AwMQ~BAI--.A-w~4Aj-pQD-~6AU~9ACP.lAP8ACP--gP8~5ABgo~BAj--4D-AAYF~7AGAv8APj1RAFZecQBJkasA~4-AEQ3WADb9-8AJEq8AIj--wD--yL-~~v3_AQMEE~HAj6jwT-~CACP--gP8AEf--AP8AEAADAAj6jwT-~FAR--8A-wAQAAM~FAj--4D-~4ACP--gP8ABgU~7AYC-wA.PVEAVl5xAEmRqwD---8ARDdYANv3-wAkSrwAiP--AP--Iv8_~~v2_AgIQ~MAj-pQD-AAj--4D-AAYF~4ABgL-ACw-MQAoNCkAF5cdAP---wAhVC4Am.6bAGje7gCI--8A--8i-w__~~v2_AgIQ~8ACMzMzP8~CAI-6UA-wAI--.A-wAGBQ~4AYC-wAsPzEAKDQpABeXHQD---8AIVQuAJvumwBo3u4AiP--AP--Iv8_~~v2_AwMQ~CABgo~8AFAAAF~6Aj-pQD-AAj--4D-AAjMzMz-AAAGCgUAAAU~DABgU~7AYC-wAsPzEAKDQpABeXHQD---8AIVQuAJvumwBo3u4AiP--AP--Iv8_~~v2_AwMQ~MAUAAAU~5ACP.lAP8GCgj--4D-BgoIzMzM-w~4AUAAAU~DABgU~7AYC-wAsPzEAKDQpABeXHQD---8AIVQuAJvumwBo3u4AiP--AP--Iv8_~~v2_AwMQ~MAUABgoF~6Aj-pQD-AAj--4D-BgoIzMzM-w~4AUAAAU~DABgUAAAYKAAAGAv8ALD8xACg0KQAXlx0A~4-ACFULgCb7psAaN7uAIj--wD--yL-~~v2_BQQXBgM~4AF~8ABgU~9ACP--gP8~5ABQ~HAI-6UA-w~KAU~PABQ~HAIzMzM-w~4AYFAAAF~AAYC-wAsPzEAKDQpABeXHQD---8AIVQuAJvumwBo3u4AiP--AP--Iv8_~~v4_AZADAw~4AIABgYGAAgAAgAAAwEBAQABAgkJCQ0JBQBQK00AbTBuAMJwvwD---8AeXJ4APG87ACZTM0AiP--AP--Ig__~~v4_AZAFBQ~4AIACgoKAAgAAgAACQAAAQICAwMDBAEDAQMEAQIEAAkNCQUJCQkFCQkJBQkJCQ0JDQBQK00AbTBuAMJwvwD---8AeXJ4APG87ACZTM0AiP--AP--Ig__~~v4_AYAFB~4AD~7AQEBAQECAgICAgMDAwMEBAQEBQUFBQYGBgYHBwcHCAgICAgJCQkJCQoKCgoBAwUHAAIEBggBAwQFBwACBggBAwUHAAIGCAEDBQcAAgYIAQMEBQcAAgQGCAEDBQcAIAAgACAAIAAgACAAIAAgACAAIAAgAAgAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAAgAgACAAIAAgACAAIAAgACAAIAAgAC~4AECAgkDAGOIcQBLd1IAYpNuAP---wA9UUkAormiAO3ewACI--8A--8i"
         }, {
             '_name': 'bell',
@@ -162,13 +162,13 @@ namespace(function () {
 
     window.onSolvedPuzzle = function () {
         let temp = PROGRESS.find(x => x.endPoint[0] == puzzle.endPoint.x && x.endPoint[1] == puzzle.endPoint.y);
-        if (temp._name === 'incomplete pentagon') localStorage['-69'] = 'hi'
+        if (temp?._name === 'incomplete pentagon') localStorage['-69'] = 'hi'
         if (temp) window.location.href = temp.URL;
     }
 
     window.checkProgress = function (hash) {
         let progress = localStorage.getItem(hash);
-        if (localStorage.getItem('puzzleProgress_' + hash)) {
+        if (localStorage.getItem('puzzleProgress_' + hash)) { // backwards compat
             let temp = '';
             for (let i = 0; i < Number(localStorage.getItem('puzzleProgress_' + hash)); i++) {
                 localStorage.setItem(hash + '_' + i, localStorage.getItem('puzzleProgress_' + hash + '_' + i))
