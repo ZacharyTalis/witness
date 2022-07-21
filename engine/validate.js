@@ -201,7 +201,12 @@ function validatePuzzleForStatusColoring(puzzle, global, copy, quick) {
 }
 
 function validatePuzzleForCopiers(puzzle, global, copy, quick) {
-    if (!global.shapes.includes('copier')) return validatePuzzleForNegators(puzzle, global, copy, quick);
+    if (!global.shapes.includes('copier')) {
+        let newCopy = {};
+        let inv = validatePuzzle(puzzle, global, false).map(x => ret(x.x, x.y));
+        for (let q of Object.keys(copy).filter(x => copy[x].type === 'nega' || inv.includes(Number(x)))) newCopy[q] = {...copy[q]};
+	return validatePuzzleForNegators(puzzle, global, newCopy, quick);
+    }
     let c = Number(Object.keys(copy).find(x => copy[x].type === 'copier'));
     if (isNaN(c)) {
         let global2;
