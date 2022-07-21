@@ -125,6 +125,10 @@ class PathSegment {
       this.circ.setAttribute('class', 'line-1 ' + data.svg.id)
       this.poly2.setAttribute('class', 'line-1 ' + data.svg.id)
       this.pillarCirc.setAttribute('class', 'line-1 ' + data.svg.id)
+      if (data.puzzle.moongate) {
+        this.poly1.setAttribute('class', 'line-1 line-moon ' + data.svg.id)
+        this.poly2.setAttribute('class', 'line-1 line-moon ' + data.svg.id)
+      }
     } else {
       this.poly1.setAttribute('class', 'line-2 ' + data.svg.id)
       this.circ.setAttribute('class', 'line-2 ' + data.svg.id)

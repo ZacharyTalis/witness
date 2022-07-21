@@ -44,6 +44,21 @@ window.draw = function(puzzle, target='puzzle') {
   // Draw cell symbols after so they overlap the lines, if necessary
   drawSymbols(puzzle, svg, target)
 
+  if (puzzle.moongate) {
+    let defs = window.createElement('defs')
+    defs.id = 'cursorGlow'
+    defs.innerHTML = '' +
+    '<filter id="lineBlur" x="-2.5" y="-2.5" width="600%" height="600%">\n' +
+    '  <feDropShadow result="shadowOut1" in="SourceGraphic" dx="0" dy="0" stdDeviation="10" flood-color="white"/>\n' + 
+    '  <feDropShadow result="shadowOut2" in="SourceGraphic" dx="0" dy="0" stdDeviation="20" flood-color="white"/>\n' + 
+    '  <feDropShadow result="shadowOut3" in="SourceGraphic" dx="0" dy="0" stdDeviation="30" flood-color="white"/>\n' + 
+    '  <feBlend in="SourceGraphic" in2="shadowOut1" result="resIn1" mode="normal" />\n' +
+    '  <feBlend in="resIn1" in2="shadowOut2" result="resIn2" mode="normal" />\n' +
+    '  <feBlend in="resIn2" in2="shadowOut3" mode="normal" />\n' +
+    '</filter>\n'
+    svg.appendChild(defs)
+  }
+
   // For pillar puzzles, add faders for the left and right sides
   if (puzzle.pillar === true) {
     var defs = window.createElement('defs')

@@ -135,50 +135,56 @@ function validatePuzzleForBridges(puzzle, global, copy, quick) {
         if (br.pos.x % 2) return br.type === 4 ? 'right' : 'left';
         else return br.type === 4 ? 'bottom' : 'top';
     }
-    let puzzle3 = clonePuzzle(puzzle)
-    let global3;
-    [puzzle3, global3] = init(puzzle3);
-    let ccopy = {};
-    for (let k in copy) ccopy[k] = {...copy[k]};
-    res = validatePuzzleForStatusColoring(puzzle3, global3, ccopy, quick);
-    puzzle.statusRight = puzzle3.statusRight;
-    puzzle.statusWrong = puzzle3.statusWrong;
-    if (global.bridgeBranches?.length) for (let br of global.bridgeBranches) {
-        let global2;
-        if (quick && inv.length) return;
-        let puzzle2 = clonePuzzle(puzzle); 
-        puzzle2.endPoint = {...puzzle.endPoint}; // break reference
-        let [x, y] = [puzzle2.endPoint.x, puzzle2.endPoint.y];
-        for (let k of puzzle.path.slice(br.path + 1).reverse()) {
-            [x, y] = [[x, y], [x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]][k];
-            if (puzzle2.pillar) x = rdiv(x, puzzle.width);
-            puzzle2.grid[x][y].line = 0;
-            if (puzzle2.symmetry) {
-                let sym = puzzle2.getSymmetricalPos(x, y);
-                puzzle2.grid[sym.x][sym.y].line = 0;
-            }
-        }
-        puzzle2.endPoint = br.pos;
-        puzzle2.path = [...puzzle.path.slice(0, br.path), 0];
-        puzzle2.grid[br.pos.x][br.pos.y].end = getEnd(br);
-        for (let br2 of global.bridgeBranches) puzzle2.grid[br2.pos.x][br2.pos.y].gap = 0; // no brig
-        [puzzle2, global2] = init(puzzle2);
+    
+    let res;
+    if (global.shapes.includes('bridgeButActually')) {
+        let puzzle3 = clonePuzzle(puzzle)
+        let global3;
+        [puzzle3, global3] = init(puzzle3);
         let ccopy = {};
         for (let k in copy) ccopy[k] = {...copy[k]};
-        res.invalid.push(...validatePuzzleForStatusColoring(puzzle2, global2, ccopy, quick).invalid);
+        res = validatePuzzleForStatusColoring(puzzle3, global3, ccopy, quick);
+        puzzle.statusRight = puzzle3.statusRight;
+        puzzle.statusWrong = puzzle3.statusWrong;
+        if (global.bridgeBranches?.length) for (let br of global.bridgeBranches) {
+            let global2;
+            if (quick && inv.length) return;
+            let puzzle2 = clonePuzzle(puzzle); 
+            puzzle2.endPoint = {...puzzle.endPoint}; // break reference
+            let [x, y] = [puzzle2.endPoint.x, puzzle2.endPoint.y];
+            for (let k of puzzle.path.slice(br.path + 1).reverse()) {
+                [x, y] = [[x, y], [x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]][k];
+                if (puzzle2.pillar) x = rdiv(x, puzzle.width);
+                puzzle2.grid[x][y].line = 0;
+                if (puzzle2.symmetry) {
+                    let sym = puzzle2.getSymmetricalPos(x, y);
+                    puzzle2.grid[sym.x][sym.y].line = 0;
+                }
+            }
+            puzzle2.endPoint = br.pos;
+            puzzle2.path = [...puzzle.path.slice(0, br.path), 0];
+            puzzle2.grid[br.pos.x][br.pos.y].end = getEnd(br);
+            for (let br2 of global.bridgeBranches) puzzle2.grid[br2.pos.x][br2.pos.y].gap = 0; // no brig
+            [puzzle2, global2] = init(puzzle2);
+            let ccopy = {};
+            for (let k in copy) ccopy[k] = {...copy[k]};
+            res.invalid.push(...validatePuzzleForStatusColoring(puzzle2, global2, ccopy, quick).invalid);
+        }
     }
+    else res = validatePuzzleForStatusColoring(puzzle, global, copy, quick);
     res.invalid = Array.from(new Set(res.invalid.map(x => ret(x.x, x.y)))).map(x => {return {'x': xy(x)[0], 'y': xy(x)[1]}});
     return res;
 }
 
 function validatePuzzleForStatusColoring(puzzle, global, copy, quick) {
-    let puzzle3 = clonePuzzle(puzzle)
-    let global3;
-    let ccopy = {};
-    for (let k in copy) ccopy[k] = {...copy[k]};
-    [puzzle3, global3] = init(puzzle3);
-    let res = validatePuzzleForCopiers(puzzle3, global3, ccopy, quick);
+    let res;
     if (puzzle.statuscoloring) {
+        let puzzle3 = clonePuzzle(puzzle)
+        let global3;
+        let ccopy = {};
+        for (let k in copy) ccopy[k] = {...copy[k]};
+        [puzzle3, global3] = init(puzzle3);
+        res = validatePuzzleForCopiers(puzzle3, global3, ccopy, quick);
         puzzle.statusRight = [];
         puzzle.statusWrong = res.invalid.filter(q => puzzle.grid?.[q.x]?.[q.y]?.color !== undefined);
         for (let x = 0; x < puzzle.width; x++) for (let y = 0; y < puzzle.height; y++) {
@@ -190,10 +196,12 @@ function validatePuzzleForStatusColoring(puzzle, global, copy, quick) {
         for (let q of puzzle.statusWrong) puzzle.grid[q.x][q.y].color = 1;
         return validatePuzzleForCopiers(puzzle, global, copy, quick);
     }
+    else res = validatePuzzleForCopiers(puzzle, global, copy, quick);
     return res;
 }
 
 function validatePuzzleForCopiers(puzzle, global, copy, quick) {
+    if (!global.shapes.includes('copier')) return validatePuzzleForNegators(puzzle, global, copy, quick);
     let c = Number(Object.keys(copy).find(x => copy[x].type === 'copier'));
     if (isNaN(c)) {
         let global2;
@@ -234,7 +242,7 @@ function validatePuzzleForCopiers(puzzle, global, copy, quick) {
 }
 
 function validatePuzzleForNegators(puzzle, global, copy, quick) {
-    [puzzle, global] = init(puzzle);
+    if (global.shapes.includes('nega')) [puzzle, global] = init(puzzle);
     let c = Number(Object.keys(copy).find(x => copy[x].type === 'nega'));
     if (isNaN(c)) return {
         'negator': puzzle.negatorResults,

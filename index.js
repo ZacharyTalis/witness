@@ -163,7 +163,8 @@ namespace(function () {
     window.onSolvedPuzzle = function () {
         let temp = PROGRESS.find(x => x.endPoint[0] == puzzle.endPoint.x && x.endPoint[1] == puzzle.endPoint.y);
         if (temp?._name === 'incomplete pentagon') localStorage['-69'] = 'hi'
-        if (temp) window.location.href = temp.URL;
+        if (temp?._name === 'challenge' && puzzle.startPoint.x === 2) window.location.href = window.NAME + '/#vs3_vA_AQAAAQAB~~EABk~~5Ag~~9AWAAAASwAAAEs~~MAWoAWg~~7~2AQEB~2AgICAgI~2DAwMEBAUFBQUF~2BgYGBgYHBwcHBwkJCQkJ~2CgoKCgoLCwsLCwwM~2DQ0N~2Dg4ODg4~2PDw8QEBAQEAAJCw0PAgYKDA4QAQMFBwkLDQ8CBgoMDhANDwIGCg4QAQMFBwkLDQ8CBgoOEAACBgoOAQMFBwkLDQ8AAgYKDgEDAAIEBgoOAQMFBwkLDQ8AAgQGCg4BAwUHEFYAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAAgAC~~5AQABAAAACAgAGCAq-xoiLP.Wmqv-GCAq-3R4gf~~B-4j~~6-yL-AGNodHRwc1w6XC9cL2NkblwuZGlzY29yZGFwcFwuY29tXC9hdHRhY2htZW50c1wvNTE1Njc4ODIxNDA4NTcxMzkyXC85OTgzMTIzMDYyODQ5NjE4MDJcL2ltYWdlXzU5XC5wbmc_'
+        else if (temp) window.location.href = temp.URL;
     }
 
     window.checkProgress = function (hash) {

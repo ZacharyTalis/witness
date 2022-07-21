@@ -59,9 +59,23 @@ namespace(function () {
   ];
   let currentChallenge = [];
   const challengeEndpoints = [{'x': 8, 'y': 5}, {'x': 5, 'y': 8}, {'x': 5, 'y': 2}];
-  const challengeCode = 899824571
+  const challengeCode = 899824571;
+  const moonGateCode = -1875047686;
+  function flower(x, y, i=0) {
+    return {
+      'type': 'flower',
+      'width': 58,
+      'height': 58,
+      'x': x * 41 + 23,
+      'y': y * 41 + 23,
+      'class': 'flower_' + i,
+      'color': HSVtoRGB(Math.random(), 0.2, 1)
+    }
+  }
 
-  window.onload = function () {
+  window.onload = loadPlay
+
+  function loadPlay() {
     solsWrapper = document.getElementById('solsWrapper')
     perfectWrapper = document.getElementById('perfectWrapper')
     let toLoad = (new URL(window.location.href).hash);
@@ -72,7 +86,7 @@ namespace(function () {
       currentPanel = localStorage[code].length - 1;
       if (code === challengeCode && localStorage['currentChallenge']) currentChallenge = localStorage['currentChallenge'].split('').map(x => Number(x));
       reloadPanel();
-    } else window.location.replace(window.NAME + '/');    
+    } else window.location.replace(window.NAME + '/'); 
   }
 
   function sol(id) {
@@ -100,6 +114,7 @@ namespace(function () {
     while (perfectWrapper.firstChild) perfectWrapper.removeChild(perfectWrapper.firstChild);
     panelNo = localStorage[code].charCodeAt(currentPanel);
     window.puzzle = puzzles[panelNo];
+    if (code === moonGateCode) window.puzzle.moongate = true;
     if (puzzle.jerrymandering) solsWrapper.appendChild(document.createRange().createContextualFragment(`<svg id="jerrymandering" viewbox="0 0 15 15" style="width: 15px; height: 15px;"><path fill="var(--text)" d="M 0 4.2 L 12.2 4.2 L 1.6 12 L 6 -0.4 L 10.8 12.2z"></path></svg>`));
     if (puzzle.statuscoloring) solsWrapper.appendChild(document.createRange().createContextualFragment(`<svg id="statuscoloring" viewbox="0 0 15 15" style="width: 15px; height: 15px;"><path fill="var(--text)" d="M9 4A1 1 0 003 4L1 4A1 1 0 0111 4C11 7 7 8 7 10L5 10C5 7 9 7 9 4M6 11A1 1 0 006 13 1 1 0 006 11z"></path></svg>`));
     if (puzzle.sols > 1) {
@@ -128,21 +143,19 @@ namespace(function () {
     window.clearAnimations();
     applyTheme(puzzle);
     applyImage(puzzle);
+    if (puzzle.moongate) for (let q of [
+      [0,0],[2,0],[4,0],
+      [0,2],[2,2],[4,2],[6,2],
+      [0,4],[2,4],[4,4],[6,4],[8,4],
+            [2,6],[4,6],[6,6],[8,6],
+                  [4,8],[6,8],[8,8],
+    ]) if (Math.random() < 0.5) drawSymbolWithSvg(document.getElementById('puzzle'), flower(q[0]*2, q[1]*2));
     if (currentPanel <= 3 && code === challengeCode) { // challenge
       let _q = challengeExits;
       for (let q of currentChallenge) _q = _q[q];
       main: for (let i = 0; i < 3; i++) {
         for (let exit of _q[i].flat()) if (localStorage[code + '_' + exit] === undefined) continue main;
-        const params = {
-          'type': 'flower',
-          'width': 58,
-          'height': 58,
-          'x': challengeEndpoints[i].x * 41 + 23,
-          'y': challengeEndpoints[i].y * 41 + 23,
-          'class': 'flower_' + i,
-          'color': HSVtoRGB(Math.random(), 0.2, 1)
-        }
-        drawSymbolWithSvg(document.getElementById('puzzle'), params)
+        drawSymbolWithSvg(document.getElementById('puzzle'), flower(challengeEndpoints[i].x, challengeEndpoints[i].y, i))
       }
     }
     else if (localStorage[`${code}_${panelNo}`])
@@ -151,6 +164,21 @@ namespace(function () {
   }
 
   window.onSolvedPuzzle = function (paths) {
+    if (puzzle.moongate) {
+      let pth = puzzle.path.slice(1).filter((_, index) => !(index % 4)).map(x => ['', 'l', 'r', 'u', 'd'][x]).join('')
+      console.error(pth);
+      switch (pth) {
+        case "rdrdldrrurdd":
+        case "rddrurddldrr":
+        case "drrdldrrurdd":
+        case "drdrurddldrr":
+          window.location.href = window.NAME + '/#vs3_vA_AQ~~BAN4ANw~~8A~2EBAQECAgICAwMEBAUFBgYHBwgI~2CQkJCQ~2oKCg~2sLCws~2MDAwBAwUHCQsAAgQGCAoMAQQGCwAMAQsADAELAAwBCwACBAYICgwBAwUHCQsAAgQGCAoMAQMFBwkLAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQFYAAAMAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAHgAHAQECAgMDAwEEAgMBAgQJAwkACQAJAwkACQMJAAABAAEAAAAGBgAgICD-P0BA-6Wqqf-Q39n-fYB--7a-vP~~6-iP~~6-Iv8AY2h0dHBzXDpcL1wvY2RuXC5kaXNjb3JkYXBwXC5jb21cL2F0dGFjaG1lbnRzXC81MTU2Nzg4MjE0MDg1NzEzOTJcLzk5ODMzOTkwNTM0MjE0ODY2OFwvaW1hZ2VfNjBcLnBuZw__'
+          break;
+        case "rdldrdruurdrdd":
+          window.location.href = window.NAME + '/challenge.html'
+          break;
+      }
+    }
     let dir = pathsToDir(puzzle.path);
     if (puzzle.optional || isNewPanel()) {
       if (puzzle.sols > 1) {
