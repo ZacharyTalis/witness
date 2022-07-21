@@ -1155,30 +1155,66 @@ const validate = [
         '_name': 'SQUARE & PENTAGON',
         'or': ['square', 'pentagon'],
         'exec': function(puzzle, regionNum, global, quick) {
-            let pos = {'square': {}, 'pentagon': {}};
+            let pos = {};
             let color = {'square': null, 'pentagon': null};
             for (let c of global.regionCells.cell[regionNum]) {
                 let cell = cel(puzzle, c);
                 if (!this.or.includes(cell.type)) continue;
-                pos[cell.type][cell.color] ??= [];
-                pos[cell.type][cell.color].push(c);
-                if (color[cell.type] == -1) continue; // no need to continue already bonked
+                pos[cell.color] ??= {'square': [], 'pentagon': []};		
+                pos[cell.color][cell.type].push(c);
+                if (!~color[cell.type]) continue; // no need to continue already bonked
                 color[cell.type] ??= cell.color; // init
                 if (color[cell.type] != cell.color || color.square == color.pentagon) { // bonk
                     console.info('[!] Segregation fault: ', cell.color, cell.type)
-                    color.square = -1; color.pentagon = -1;
+                    if (!puzzle.valid && quick) {
+						global.regionData[regionNum].push(c);
+						return;
+					}
+					color.square = -1; color.pentagon = -1;
                 }
             }
-            if (color.square == -1) for (let shape of Object.values(pos)) {
-                let mx = [];
-                if (Object.values(shape).length === 1) global.regionData[regionNum].push(...Object.values(shape)[0]);
-                else for (let o of Object.values(shape)) {
-                    if (mx.length >= o.length) global.regionData[regionNum].push(...o);
-                    if (mx.length <= o.length) {
-                        global.regionData[regionNum].push(...mx);
-                        mx = o;
-                    }
-                }
+            if (color.square == -1) {
+				let maxMatch = {'square': [], 'pentagon': []}; // Both shapes are the same color, and most numerous
+				let maxCount = 0;
+				let maxSep   = {'square': [], 'pentagon': []}; // Max # of each seperate shape (excluding maxMatch)
+				for (let color of Object.values(pos)) {
+					let colCount = color['square'].length + color['pentagon'].length;
+					if (colCount > maxCount) {
+						maxCount = maxMatch;
+						maxMatch = color;
+						color    = maxCount;
+						maxCount = colCount;
+					}
+					for (let shape of Object.keys(color)) {
+						if (!color[shape].length) continue; //skip empty arrays
+						if (maxSep[shape].length && ~maxSep[shape][0] && color[shape].length >= maxSep[shape].length) {
+							global.regionData[regionNum].push(...maxSep[shape]);
+							maxSep[shape][0] = -1; //label as 'already failed'
+						}
+						if (color[shape].length > maxSep[shape].length) maxSep[shape] = color[shape];
+						else global.regionData[regionNum].push(...color[shape]);
+					}
+				}
+				let sepCount = maxSep['square'].length + maxMatch['pentagon'].length; 
+				maxCount = maxMatch['square'].length + maxSep['pentagon'].length;
+				if ( //cited source for this if logic: Incomprehensible whiteboard scrawls.
+					sepCount >= maxCount 
+					|| maxMatch['square'].length <= maxSep['square'].length
+				) global.regionData[regionNum].push(...maxMatch['square']);
+				if (
+					sepCount <= maxCount
+					|| maxMatch['pentagon'].length <= maxSep['pentagon'].length
+				) global.regionData[regionNum].push(...maxMatch['pentagon']);
+				if (
+					~maxSep['square'][0] 
+					&& maxCount >= sepCount 
+					&& maxMatch['square'].length >= maxSep['square'].length
+				) global.regionData[regionNum].push(...maxSep['square']);
+				if (
+					~maxSep['pentagon'][0] 
+					&& maxCount <= sepCount 
+					&& maxMatch['pentagon'].length >= maxSep['pentagon'].length
+				) global.regionData[regionNum].push(...maxSep['pentagon']);
             }
         }
     }, {
