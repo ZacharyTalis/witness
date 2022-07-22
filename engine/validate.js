@@ -194,6 +194,7 @@ function validatePuzzleForStatusColoring(puzzle, global, copy, quick) {
         }
         for (let q of puzzle.statusRight) puzzle.grid[q.x][q.y].color = 0;
         for (let q of puzzle.statusWrong) puzzle.grid[q.x][q.y].color = 1;
+        [puzzle, global] = init(puzzle);
         return validatePuzzleForCopiers(puzzle, global, copy, quick);
     }
     else res = validatePuzzleForCopiers(puzzle, global, copy, quick);
