@@ -61,6 +61,7 @@ namespace(function () {
   const challengeEndpoints = [{'x': 8, 'y': 5}, {'x': 5, 'y': 8}, {'x': 5, 'y': 2}];
   const challengeCode = 899824571;
   const moonGateCode = -1875047686;
+  const vanillaCode = [744706933, 1678930068];
   function flower(x, y, i=0) {
     return {
       'type': 'flower',
@@ -166,7 +167,6 @@ namespace(function () {
   window.onSolvedPuzzle = function (paths) {
     if (puzzle.moongate) {
       let pth = puzzle.path.slice(1).filter((_, index) => !(index % 4)).map(x => ['', 'l', 'r', 'u', 'd'][x]).join('')
-      console.error(pth);
       switch (pth) {
         case "rdrdldrrurdd":
         case "rddrurddldrr":
@@ -178,6 +178,11 @@ namespace(function () {
           window.location.href = window.NAME + '/challenge.html'
           break;
       }
+    }
+    if (vanillaCode.includes(code) && puzzle.getCell(puzzle.endPoint.x, puzzle.endPoint.y).endType == 1) {
+      localStorage['744706933_8'] = "\u0006\u0002Z\u0015";
+      localStorage['1678930068_3'] = "\u0002\u0002U\u001a";
+      window.location.href = "https://store.steampowered.com/app/210970/The_Witness/";
     }
     let dir = pathsToDir(puzzle.path);
     if (puzzle.optional || isNewPanel()) {
