@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 window.NAME = "https://witness.zacharytalis.com"
+=======
+window.NAME = "https://looksy.kro.kr"
+>>>>>>> 6202db240eaef09cf3e99b59018d49fca70d3d71
 
 function namespace(code) {
   code()
